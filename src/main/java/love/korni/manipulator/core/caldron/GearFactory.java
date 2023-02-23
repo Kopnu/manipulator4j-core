@@ -64,7 +64,7 @@ public class GearFactory {
         return getGear(gearMetadata);
     }
 
-    public <T> T getGear(String gearName, Class<T> type) {
+    protected  <T> T getGear(String gearName, Class<T> type) {
         GearMetadata gearMetadata = getMetadata(type, gearName);
         if (gearMetadata == null) {
             throw new NoSuchGearMetadataException("Unknown gear with name [%s]".formatted(gearName));
@@ -169,6 +169,7 @@ public class GearFactory {
 
             singletonsCurrentlyInCreation.add(gearMetadata.getGearName());
             try {
+                //ToDo: Переделать на паттерн, чтобы не было привязки к типу метадаты
                 if (gearMetadata instanceof MethodGearMetadata methodGearMetadata) {
                     Method method = methodGearMetadata.getMethod();
                     Class<?>[] parameterTypes = method.getParameterTypes();

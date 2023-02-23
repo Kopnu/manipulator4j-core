@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  */
 public class Manipulator {
 
-    private Reflections reflections;
+    private final Reflections reflections;
 
     public static Caldron run(Class<?> mainClass) {
         return new Manipulator(mainClass).manipulate();
@@ -40,7 +40,7 @@ public class Manipulator {
         return new Manipulator(mainClass).manipulate(args);
     }
 
-    public Manipulator(Class<?> mainClass) {
+    private Manipulator(Class<?> mainClass) {
         this.reflections = new Reflections(mainClass.getPackageName(), values());
     }
 
@@ -53,6 +53,8 @@ public class Manipulator {
         gearMetadataSet.addAll(reflections.getMethodsAnnotatedWith(Gear.class).parallelStream().map(MethodGearMetadata::new).collect(Collectors.toSet()));
         gearMetadataSet.addAll(reflections.getTypesAnnotatedWith(Gear.class).parallelStream().map(ClassGearMetadata::new).collect(Collectors.toSet()));
 
+        // ToDo: Отправка лога/баннера о старте конфигурации DI
+
         GearFactory gearFactory = new GearFactory(gearMetadataSet);
 
         ArgsGear argsGear = new DefaultArgsGear(args);
@@ -64,6 +66,8 @@ public class Manipulator {
 
         ApplicationCaldron applicationCaldron = new ApplicationCaldron(gearFactory);
         gearFactory.registerSingleton(applicationCaldron);
+
+        // ToDo: Отправка лога о конце конфигурации DI
         return applicationCaldron;
     }
 

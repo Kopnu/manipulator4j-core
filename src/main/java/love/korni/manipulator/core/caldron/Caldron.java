@@ -12,7 +12,7 @@ package love.korni.manipulator.core.caldron;
  */
 public interface Caldron {
 
-    <T> T getInstance(Class<T> clazz);
+    <T> T getGearOfType(Class<T> clazz);
 
     GearFactory getGearFactory();
 }

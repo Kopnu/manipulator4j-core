@@ -20,7 +20,7 @@ public class ApplicationCaldron implements Caldron {
         this.gearFactory = gearFactory;
     }
 
-    public <T> T getInstance(Class<T> clazz) {
+    public <T> T getGearOfType(Class<T> clazz) {
         return getGearFactory().getGear(clazz);
     }
 
