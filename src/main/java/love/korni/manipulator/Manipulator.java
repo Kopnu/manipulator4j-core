@@ -49,20 +49,18 @@ public class Manipulator {
     }
 
     private Caldron manipulate(String[] args) {
-        // Собрать всю метадату гиров в приложении
         Set<GearMetadata> gearMetadataSet = new HashSet<>();
         gearMetadataSet.addAll(reflections.getMethodsAnnotatedWith(Gear.class).parallelStream().map(MethodGearMetadata::new).collect(Collectors.toSet()));
         gearMetadataSet.addAll(reflections.getTypesAnnotatedWith(Gear.class).parallelStream().map(ClassGearMetadata::new).collect(Collectors.toSet()));
 
-        // Создать фабрику с этой метадатой
         GearFactory gearFactory = new GearFactory(gearMetadataSet);
 
-        // Регистрируем гир аргументов
         ArgsGear argsGear = new DefaultArgsGear(args);
         gearFactory.registerSingleton("argsgear", argsGear);
 
         // Запустить CommandLineRunner'ы
         // foreach commandLineRunner.run(args);
+        //ToDo: Реализация CommandRunner
 
         ApplicationCaldron applicationCaldron = new ApplicationCaldron(gearFactory);
         gearFactory.registerSingleton(applicationCaldron);
