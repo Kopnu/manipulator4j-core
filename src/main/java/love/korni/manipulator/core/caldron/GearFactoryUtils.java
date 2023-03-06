@@ -5,6 +5,8 @@
 
 package love.korni.manipulator.core.caldron;
 
+import love.korni.manipulator.core.annotation.Gear;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,6 +40,18 @@ public class GearFactoryUtils {
 
         RESOLVABLE_NAME.put(name, resolve);
         return resolve;
+    }
+
+    public static String resolveCircularRef(List<String> singletonsCurrentlyInCreation, String name) {
+        singletonsCurrentlyInCreation.add(name);
+        return singletonsCurrentlyInCreation.stream().reduce((str, str2) -> str + " <- " + str2).get();
+    }
+
+    public static String getGearAnnotationValue(Gear gearAnnotation, String defaultValue) {
+        if (gearAnnotation != null) {
+            return gearAnnotation.value();
+        }
+        return defaultValue;
     }
 
 }

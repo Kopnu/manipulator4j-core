@@ -21,4 +21,7 @@ import java.lang.annotation.Target;
 @Target({FIELD, CONSTRUCTOR, METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Autoinject {
+
+    String value() default "";
+
 }
