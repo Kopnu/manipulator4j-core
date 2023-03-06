@@ -5,6 +5,9 @@
 
 package love.korni.manipulator.core.caldron.metadata;
 
+import static love.korni.manipulator.core.caldron.GearFactoryUtils.getGearAnnotationValue;
+
+import love.korni.manipulator.core.annotation.Gear;
 import love.korni.manipulator.util.ReflectionUtils;
 
 import lombok.Getter;
@@ -22,7 +25,7 @@ public class ClassGearMetadata extends AbstractGearMetadata {
     protected final List<Class<?>> interfaces;
 
     public ClassGearMetadata(Class<?> clazz) {
-        this(clazz, clazz.getSimpleName(), null);
+        this(clazz, getGearAnnotationValue(clazz.getAnnotation(Gear.class), ""), null);
     }
 
     public ClassGearMetadata(Class<?> clazz, String name, GearMetadata parent) {

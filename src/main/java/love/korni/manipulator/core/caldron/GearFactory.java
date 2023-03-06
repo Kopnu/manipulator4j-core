@@ -5,6 +5,7 @@
 
 package love.korni.manipulator.core.caldron;
 
+import love.korni.manipulator.core.annotation.Autoinject;
 import love.korni.manipulator.core.caldron.metadata.ClassGearMetadata;
 import love.korni.manipulator.core.caldron.metadata.GearMetadata;
 import love.korni.manipulator.core.caldron.metadata.MethodGearMetadata;
@@ -20,6 +21,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,7 +41,7 @@ public class GearFactory {
     private final Map<String, GearMetadata> gearMetadataByNameMap = new ConcurrentHashMap<>(64);
     private final Map<Class<?>, GearMetadata> gearMetadataByClassMap = new ConcurrentHashMap<>(64);
 
-    private final Set<String> singletonsCurrentlyInCreation = Collections.newSetFromMap(new ConcurrentHashMap<>(16));
+    private final List<String> singletonsCurrentlyInCreation = Collections.synchronizedList(new LinkedList<>());
 
     public GearFactory() {
     }
@@ -64,7 +66,7 @@ public class GearFactory {
         return getGear(gearMetadata);
     }
 
-    protected  <T> T getGear(String gearName, Class<T> type) {
+    protected <T> T getGear(String gearName, Class<T> type) {
         GearMetadata gearMetadata = getMetadata(type, gearName);
         if (gearMetadata == null) {
             throw new NoSuchGearMetadataException("Unknown gear with name [%s]".formatted(gearName));
@@ -103,33 +105,34 @@ public class GearFactory {
 
     private GearMetadata getMetadata(Class<?> clazz, String name) {
         Assert.notNull(clazz, "class must not be null");
-        GearMetadata gearMetadata = null;
         name = name != null ? name.toLowerCase() : clazz.getSimpleName().toLowerCase();
-        List<String> candidates = GearFactoryUtils.resolveGearNames(gearMetadataByNameMap.keySet(), name);
 
-        // Поиск гира по имени
-        if (candidates.contains(name)) {
-            gearMetadata = gearMetadataByNameMap.get(name);
+        // Поиск по Имени шестерни (название переменной или искомой шестерни)
+        GearMetadata gearMetadata = gearMetadataByNameMap.get(name);
+
+        // Поиск гира по Классу (тип переменной или искомой шестерни)
+        if (gearMetadata == null) {
+            gearMetadata = gearMetadataByClassMap.get(clazz);
         }
-        //Поиск гира по интерфейс
 
         if (gearMetadata == null) {
-            List<GearMetadata> gearMetadataResolve = new ArrayList<>();
-            for (String candidate : candidates) {
-                GearMetadata gearMetadataCandidate = gearMetadataByNameMap.get(candidate);
-                if (gearMetadataCandidate instanceof ClassGearMetadata classGearMetadata) {
-                    if (classGearMetadata.getInterfaces().contains(clazz)) {
-                        gearMetadataResolve.add(classGearMetadata);
-                    }
+            //Поиск гира по Интерфейсу (если тип - интерфейс, то поиск реализации интерфейса)
+            if (clazz.isInterface()) {
+                List<GearMetadata> gearMetadataResolve = new ArrayList<>();
+                gearMetadataByClassMap.keySet().stream()
+                        .filter(clazz::isAssignableFrom)
+                        .forEach(_class -> gearMetadataResolve.add(gearMetadataByClassMap.get(_class)));
+
+                if (gearMetadataResolve.size() > 1) {
+                    StringBuilder sb = new StringBuilder();
+                    gearMetadataResolve.forEach(gmr -> sb.append(gmr.getGearName()).append("(").append(gmr.getGearClass()).append(")"));
+                    throw new NoSuchGearMetadataException("So much candidates [%s] for autoinjected gear [%s]. Specify gear name.".formatted(sb, clazz));
+                } else if (gearMetadataResolve.size() == 1) {
+                    gearMetadata = gearMetadataResolve.get(0);
                 }
             }
-
-            if (gearMetadataResolve.size() > 1) {
-                throw new NoSuchGearMetadataException("So much candidates [%s] for gear [%s]".formatted(gearMetadataResolve, clazz));
-            } else if (gearMetadataResolve.size() == 1) {
-                gearMetadata = gearMetadataResolve.get(0);
-            }
         }
+
         return gearMetadata;
     }
 
@@ -164,7 +167,8 @@ public class GearFactory {
             Object gear = null;
 
             if (singletonsCurrentlyInCreation.contains(gearMetadata.getGearName())) {
-                throw new GearConstructionException("Gear [%s] currently in construction. Circular reference?".formatted(gearMetadata.getGearName()));
+                throw new GearConstructionException("Gear [%s] currently in construction. Circular reference? [%s]"
+                        .formatted(gearMetadata.getGearName(), GearFactoryUtils.resolveCircularRef(singletonsCurrentlyInCreation, gearMetadata.getGearName())));
             }
 
             singletonsCurrentlyInCreation.add(gearMetadata.getGearName());
@@ -195,8 +199,9 @@ public class GearFactory {
                     };
                     List<Field> fieldsAnnotated = classGearMetadata.getFieldsAnnotated();
                     for (Field field : fieldsAnnotated) {
+                        String injectGear = field.getAnnotation(Autoinject.class).value();
                         ReflectionUtils.makeAccessible(field);
-                        Object value = getGear(field.getName(), field.getType());
+                        Object value = getGear(injectGear.isBlank() ? field.getName() : injectGear, field.getType());
                         try {
                             field.set(gear, value);
                         } catch (IllegalAccessException e) {

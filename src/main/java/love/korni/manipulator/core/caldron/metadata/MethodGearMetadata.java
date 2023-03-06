@@ -5,6 +5,8 @@
 
 package love.korni.manipulator.core.caldron.metadata;
 
+import love.korni.manipulator.core.annotation.Gear;
+
 import java.lang.reflect.Method;
 
 /**
@@ -15,7 +17,7 @@ public class MethodGearMetadata extends AbstractGearMetadata {
     private final Method method;
 
     public MethodGearMetadata(Method method) {
-        super(method.getReturnType());
+        super(method.getAnnotation(Gear.class).value(), method.getReturnType());
         this.method = method;
         this.parent = new ClassGearMetadata(method.getDeclaringClass());
     }

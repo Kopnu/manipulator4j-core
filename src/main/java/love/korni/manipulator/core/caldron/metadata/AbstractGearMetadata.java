@@ -42,10 +42,14 @@ public abstract class AbstractGearMetadata implements GearMetadata {
         this(gearClass.getCanonicalName(), gearClass.getSimpleName(), gearClass);
     }
 
+    public AbstractGearMetadata(String name, Class<?> gearClass) {
+        this(gearClass.getCanonicalName(), name, gearClass);
+    }
+
     public AbstractGearMetadata(String canonicalName, String name, Class<?> gearClass) {
-        this.canonicalName = canonicalName;
-        this.name = name;
         this.gearClass = gearClass;
+        this.canonicalName = StringUtils.isEmpty(canonicalName) ? gearClass.getCanonicalName() : canonicalName;
+        this.name = StringUtils.isEmpty(name) ? gearClass.getSimpleName() : name;
         analyzeGear();
     }
 
