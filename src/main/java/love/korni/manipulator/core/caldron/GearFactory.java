@@ -75,17 +75,24 @@ public class GearFactory {
     }
 
     protected <T> T getGear(GearMetadata gearMetadata) {
-        Object gear = singletonByNameGears.get(gearMetadata.getGearName());
-        if (gear == null) {
-            gear = singletonByClassGears.get(gearMetadata.getGearClass());
-        }
-        if (gear != null) {
-            return (T) gear;
-        }
+        Object newGear = switch (gearMetadata.getType()) {
+            case SINGLETON -> {
+                Object gear = singletonByNameGears.get(gearMetadata.getGearName());
+                if (gear == null) {
+                    gear = singletonByClassGears.get(gearMetadata.getGearClass());
+                }
+                if (gear != null) {
+                    yield gear;
+                }
 
-        gear = constructGear(gearMetadata);
-        registerGear(gearMetadata, gear);
-        return (T) gear;
+                gear = constructGear(gearMetadata);
+                registerGear(gearMetadata, gear);
+                yield gear;
+            }
+            case PROTOTYPE -> constructGear(gearMetadata);
+        };
+
+        return (T) newGear;
     }
 
     private GearMetadata createMetadata(Class<?> clazz) {

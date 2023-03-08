@@ -6,6 +6,7 @@
 package love.korni.manipulator.core.caldron.metadata;
 
 import love.korni.manipulator.core.annotation.Autoinject;
+import love.korni.manipulator.core.annotation.Gear;
 import love.korni.manipulator.util.ReflectionUtils;
 
 import lombok.Getter;
@@ -16,8 +17,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.Optional;
 
 /**
  * AbstractGearMetadata
@@ -29,7 +29,7 @@ public abstract class AbstractGearMetadata implements GearMetadata {
 
     protected final String canonicalName;
     protected final String name;
-    protected final GearType type = GearType.SINGLETON;
+    protected final GearType type;
     protected final Class<?> gearClass;
 
     protected GearMetadata parent;
@@ -51,6 +51,8 @@ public abstract class AbstractGearMetadata implements GearMetadata {
         this.canonicalName = StringUtils.isEmpty(canonicalName) ? gearClass.getCanonicalName() : canonicalName;
         this.name = StringUtils.isEmpty(name) ? gearClass.getSimpleName() : name;
         analyzeGear();
+        Optional<Gear> gearAnnotation = typeAnnotations.stream().filter(annotation -> annotation instanceof Gear).map(annotation -> (Gear) annotation).findFirst();
+        this.type = gearAnnotation.isPresent() ? gearAnnotation.get().scope() : GearType.SINGLETON;
     }
 
     private void analyzeGear() {
@@ -62,7 +64,7 @@ public abstract class AbstractGearMetadata implements GearMetadata {
 
     public String getGearName() {
         String name;
-        if (!StringUtils.isBlank(this.name) ) {
+        if (!StringUtils.isBlank(this.name)) {
             name = this.name;
         } else if (!StringUtils.isBlank(this.canonicalName)) {
             name = this.canonicalName;
