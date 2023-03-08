@@ -5,6 +5,8 @@
 
 package love.korni.manipulator.core.caldron;
 
+import java.lang.reflect.Type;
+
 /**
  * Caldron
  *
@@ -12,7 +14,9 @@ package love.korni.manipulator.core.caldron;
  */
 public interface Caldron {
 
-    <T> T getGearOfType(Class<T> clazz);
+    <T> T getGearOfType(Class<T> type);
+
+    <T> T getGearOfType(Type type);
 
     GearFactory getGearFactory();
 }

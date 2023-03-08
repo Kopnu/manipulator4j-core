@@ -7,6 +7,8 @@ package love.korni.manipulator.core.caldron;
 
 import love.korni.manipulator.core.exception.ManipulatorRuntimeException;
 
+import java.lang.reflect.Type;
+
 /**
  * ApplicationCaldron
  *
@@ -20,8 +22,12 @@ public class ApplicationCaldron implements Caldron {
         this.gearFactory = gearFactory;
     }
 
-    public <T> T getGearOfType(Class<T> clazz) {
-        return getGearFactory().getGear(clazz);
+    public <T> T getGearOfType(Class<T> type) {
+        return getGearFactory().getGear(type);
+    }
+
+    public <T> T getGearOfType(Type type) {
+        return getGearFactory().getGear(type);
     }
 
     public GearFactory getGearFactory() {

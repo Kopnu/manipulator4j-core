@@ -15,6 +15,8 @@ import love.korni.manipulator.core.exception.NoSuchGearMetadataException;
 import love.korni.manipulator.util.Assert;
 import love.korni.manipulator.util.ReflectionUtils;
 
+import lombok.SneakyThrows;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -70,6 +72,12 @@ public class GearFactory {
         return getGear(gearMetadata);
     }
 
+    @SneakyThrows
+    public <T> T getGear(Type type) {
+        Class<T> loadClass = (Class<T>) this.getClass().getClassLoader().loadClass(type.getTypeName());
+        return getGear(loadClass);
+    }
+
     protected <T> T getGear(String gearName, Class<T> type) {
         GearMetadata gearMetadata = getMetadata(type, gearName);
         if (gearMetadata == null) {
@@ -108,7 +116,8 @@ public class GearFactory {
         return (T) newGear;
     }
 
-    protected <T> Collection<T> getGears(Type type) throws ClassNotFoundException {
+    @SneakyThrows
+    protected <T> Collection<T> getGears(Type type) {
         Class<T> loadClass = (Class<T>) this.getClass().getClassLoader().loadClass(type.getTypeName());
         return getGears(loadClass);
     }
@@ -269,7 +278,7 @@ public class GearFactory {
                     }
 
                 }
-            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(e);
             }
 
