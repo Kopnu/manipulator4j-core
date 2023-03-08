@@ -6,6 +6,7 @@
 package love.korni.manipulator.core.caldron;
 
 import love.korni.manipulator.core.annotation.Autoinject;
+import love.korni.manipulator.core.caldron.metadata.ArrayGearMetadata;
 import love.korni.manipulator.core.caldron.metadata.ClassGearMetadata;
 import love.korni.manipulator.core.caldron.metadata.GearMetadata;
 import love.korni.manipulator.core.caldron.metadata.MethodGearMetadata;
@@ -18,8 +19,11 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -69,7 +73,16 @@ public class GearFactory {
     protected <T> T getGear(String gearName, Class<T> type) {
         GearMetadata gearMetadata = getMetadata(type, gearName);
         if (gearMetadata == null) {
-            throw new NoSuchGearMetadataException("Unknown gear with name [%s]".formatted(gearName));
+            throw new NoSuchGearMetadataException("Unknown gear with name [%s] and type [%s]".formatted(gearName, type));
+        }
+        return getGear(gearMetadata);
+    }
+
+    protected <T> T getGear(String gearName, Type type) throws ClassNotFoundException {
+        Class<?> loadClass = this.getClass().getClassLoader().loadClass(type.getTypeName());
+        GearMetadata gearMetadata = getMetadata(loadClass, gearName);
+        if (gearMetadata == null) {
+            throw new NoSuchGearMetadataException("Unknown gear with name [%s] and type [%s]".formatted(gearName, type));
         }
         return getGear(gearMetadata);
     }
@@ -95,6 +108,29 @@ public class GearFactory {
         return (T) newGear;
     }
 
+    protected <T> Collection<T> getGears(Type type) throws ClassNotFoundException {
+        Class<T> loadClass = (Class<T>) this.getClass().getClassLoader().loadClass(type.getTypeName());
+        return getGears(loadClass);
+    }
+
+    protected <T> Collection<T> getGears(Class<T> type) {
+        GearMetadata gearMetadata = getMetadata(type, null, true);
+
+        if (gearMetadata instanceof ArrayGearMetadata arrayGearMetadata) {
+            Collection<T> gears = new ArrayList<>();
+            List<? extends Class<?>> types = arrayGearMetadata.getGearMetadatas().stream()
+                    .map(GearMetadata::getGearClass)
+                    .toList();
+            for (Class<?> _type : types) {
+                Object gear = getGear(_type);
+                gears.add((T) gear);
+            }
+            return gears;
+        }
+
+        return Collections.emptyList();
+    }
+
     private GearMetadata createMetadata(Class<?> clazz) {
         return createMetadata(clazz, clazz.getSimpleName());
     }
@@ -111,6 +147,10 @@ public class GearFactory {
     }
 
     private GearMetadata getMetadata(Class<?> clazz, String name) {
+        return getMetadata(clazz, name, false);
+    }
+
+    private GearMetadata getMetadata(Class<?> clazz, String name, boolean isManyResults) {
         Assert.notNull(clazz, "class must not be null");
         name = name != null ? name.toLowerCase() : clazz.getSimpleName().toLowerCase();
 
@@ -122,21 +162,22 @@ public class GearFactory {
             gearMetadata = gearMetadataByClassMap.get(clazz);
         }
 
-        if (gearMetadata == null) {
-            //Поиск гира по Интерфейсу (если тип - интерфейс, то поиск реализации интерфейса)
-            if (clazz.isInterface()) {
-                List<GearMetadata> gearMetadataResolve = new ArrayList<>();
-                gearMetadataByClassMap.keySet().stream()
-                        .filter(clazz::isAssignableFrom)
-                        .forEach(_class -> gearMetadataResolve.add(gearMetadataByClassMap.get(_class)));
+        // Поиск гира по Интерфейсу (если тип - интерфейс, то поиск реализации интерфейса)
+        if (gearMetadata == null && clazz.isInterface()) {
+            List<GearMetadata> gearMetadataResolve = new ArrayList<>();
+            gearMetadataByClassMap.keySet().stream()
+                    .filter(clazz::isAssignableFrom)
+                    .forEach(_class -> gearMetadataResolve.add(gearMetadataByClassMap.get(_class)));
 
-                if (gearMetadataResolve.size() > 1) {
+            if (gearMetadataResolve.size() > 1) {
+                if (!isManyResults) {
                     StringBuilder sb = new StringBuilder();
                     gearMetadataResolve.forEach(gmr -> sb.append(gmr.getGearName()).append("(").append(gmr.getGearClass()).append(")"));
                     throw new NoSuchGearMetadataException("So much candidates [%s] for autoinjected gear [%s]. Specify gear name.".formatted(sb, clazz));
-                } else if (gearMetadataResolve.size() == 1) {
-                    gearMetadata = gearMetadataResolve.get(0);
                 }
+                return new ArrayGearMetadata(clazz, gearMetadataResolve);
+            } else if (gearMetadataResolve.size() == 1) {
+                gearMetadata = gearMetadataResolve.get(0);
             }
         }
 
@@ -208,16 +249,27 @@ public class GearFactory {
                     for (Field field : fieldsAnnotated) {
                         String injectGear = field.getAnnotation(Autoinject.class).value();
                         ReflectionUtils.makeAccessible(field);
-                        Object value = getGear(injectGear.isBlank() ? field.getName() : injectGear, field.getType());
+                        Class<?> fieldType = field.getType();
+                        Object value;
+                        if (Collection.class.isAssignableFrom(fieldType)) {
+                            ParameterizedType genericType = (ParameterizedType) field.getGenericType();
+                            Type typeArgument = genericType.getActualTypeArguments()[0];
+                            value = getGears(typeArgument);
+                        } else {
+                            value = getGear(injectGear.isBlank() ? field.getName() : injectGear, fieldType);
+                        }
+
                         try {
                             field.set(gear, value);
                         } catch (IllegalAccessException e) {
                             throw new IllegalStateException("Could not access method or field: " + e.getMessage());
+                        } catch (IllegalArgumentException e) {
+                            throw new GearConstructionException("Error while construction a gear", e);
                         }
                     }
 
                 }
-            } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
 
