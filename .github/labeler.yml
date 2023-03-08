@@ -1,17 +1,23 @@
 config:
-  - ".github/**"
-  - ".gitignore"
-  - "pom.xml"
+  - .github/*
+  - .github/**/*
+  - .gitignore
+  - pom.xml
 
 code:
-  - "src/main/*"
+  - src/main/*
+  - src/main/**/*
 
 tests:
-  - "src/test/*"
+  - src/test/*
+  - src/test/**/*
 
 documentation:
-  - "docs/**"
+  - docs/*
+  - docs/**/*
 
 TRASH:
-  - ".idea/**"
-  - "target/**"
+  - .idea/*
+  - .idea/**/*
+  - target/*
+  - target/**/*

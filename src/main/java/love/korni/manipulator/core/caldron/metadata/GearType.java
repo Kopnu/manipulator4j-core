@@ -12,6 +12,8 @@ package love.korni.manipulator.core.caldron.metadata;
  */
 public enum GearType {
 
-    SINGLETON;
+    SINGLETON,
+
+    PROTOTYPE;
 
 }
