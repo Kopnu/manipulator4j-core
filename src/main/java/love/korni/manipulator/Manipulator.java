@@ -36,12 +36,20 @@ public class Manipulator {
         return new Manipulator(mainClass).manipulate();
     }
 
+    public static Caldron run(String packageName) {
+        return new Manipulator(packageName).manipulate();
+    }
+
     public static Caldron run(Class<?> mainClass, String[] args) {
         return new Manipulator(mainClass).manipulate(args);
     }
 
     private Manipulator(Class<?> mainClass) {
         this.reflections = new Reflections(mainClass.getPackageName(), values());
+    }
+
+    private Manipulator(String packageName) {
+        this.reflections = new Reflections(packageName, values());
     }
 
     private Caldron manipulate() {
