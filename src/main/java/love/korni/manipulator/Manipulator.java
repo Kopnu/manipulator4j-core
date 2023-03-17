@@ -7,6 +7,7 @@ package love.korni.manipulator;
 
 import static org.reflections.scanners.Scanners.values;
 
+import love.korni.manipulator.core.annotation.Autoinject;
 import love.korni.manipulator.core.caldron.GearFactory;
 import love.korni.manipulator.core.caldron.metadata.GearMetadata;
 import love.korni.manipulator.core.gear.args.ArgsGear;
@@ -17,17 +18,20 @@ import love.korni.manipulator.core.caldron.Caldron;
 import love.korni.manipulator.core.caldron.metadata.ClassGearMetadata;
 import love.korni.manipulator.core.caldron.metadata.MethodGearMetadata;
 
+import lombok.extern.slf4j.Slf4j;
 import org.reflections.Reflections;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * DI container. Entry endpoint for using manipulator4j.
  *
  * @author Sergei_Konilov
  */
+@Slf4j
 public class Manipulator {
 
     private final Reflections reflections;
@@ -57,9 +61,12 @@ public class Manipulator {
     }
 
     private Caldron manipulate(String[] args) {
+        log.info("Manipulator4j configuration starting");
         Set<GearMetadata> gearMetadataSet = new HashSet<>();
         gearMetadataSet.addAll(reflections.getMethodsAnnotatedWith(Gear.class).parallelStream().map(MethodGearMetadata::new).collect(Collectors.toSet()));
         gearMetadataSet.addAll(reflections.getTypesAnnotatedWith(Gear.class).parallelStream().map(ClassGearMetadata::new).collect(Collectors.toSet()));
+
+        checkAnnotationsUsage();
 
         // ToDo: Отправка лога/баннера о старте конфигурации DI
 
@@ -76,7 +83,19 @@ public class Manipulator {
         gearFactory.registerSingleton(applicationCaldron);
 
         // ToDo: Отправка лога о конце конфигурации DI
+
+        log.info("Manipulator4j configuration completed!");
         return applicationCaldron;
     }
 
+    private void checkAnnotationsUsage() {
+        Set<Class<?>> classes = Stream.concat(
+                        Stream.concat(
+                                reflections.getFieldsAnnotatedWith(Autoinject.class).stream().map(field -> (Class<?>) field.getDeclaringClass()),
+                                reflections.getMethodsAnnotatedWith(Autoinject.class).stream().map(method -> (Class<?>) method.getDeclaringClass())),
+                        reflections.getConstructorsAnnotatedWith(Autoinject.class).stream().map(constructor -> (Class<?>) constructor.getDeclaringClass()))
+                .filter(clazz -> !clazz.isAnnotationPresent(Gear.class))
+                .collect(Collectors.toSet());
+        log.warn("These classes use @Autoinject annotation but are not marked as @Gear: {}", classes);
+    }
 }
