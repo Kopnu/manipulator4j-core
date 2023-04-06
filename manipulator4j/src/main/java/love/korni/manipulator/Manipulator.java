@@ -8,15 +8,15 @@ package love.korni.manipulator;
 import static org.reflections.scanners.Scanners.values;
 
 import love.korni.manipulator.core.annotation.Autoinject;
-import love.korni.manipulator.core.caldron.GearFactory;
-import love.korni.manipulator.core.caldron.metadata.GearMetadata;
-import love.korni.manipulator.core.gear.args.ArgsGear;
-import love.korni.manipulator.core.gear.args.DefaultArgsGear;
 import love.korni.manipulator.core.annotation.Gear;
 import love.korni.manipulator.core.caldron.ApplicationCaldron;
 import love.korni.manipulator.core.caldron.Caldron;
+import love.korni.manipulator.core.caldron.GearFactory;
 import love.korni.manipulator.core.caldron.metadata.ClassGearMetadata;
+import love.korni.manipulator.core.caldron.metadata.GearMetadata;
 import love.korni.manipulator.core.caldron.metadata.MethodGearMetadata;
+import love.korni.manipulator.core.gear.args.ArgsGear;
+import love.korni.manipulator.core.gear.args.DefaultArgsGear;
 
 import lombok.extern.slf4j.Slf4j;
 import org.reflections.Reflections;
