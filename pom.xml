@@ -11,6 +11,7 @@
 
     <modules>
         <module>manipulator4j</module>
+        <module>manipulator4j-l10n</module>
     </modules>
 
     <name>Manipulator4J</name>
@@ -44,14 +45,26 @@
 
         <lombok.version>1.18.24</lombok.version>
         <slf4j-api.version>2.0.3</slf4j-api.version>
+        <caffeine.version>3.1.5</caffeine.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>love.korni</groupId>
+                <artifactId>manipulator4j</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.reflections</groupId>
                 <artifactId>reflections</artifactId>
                 <version>${reflections.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.ben-manes.caffeine</groupId>
+                <artifactId>caffeine</artifactId>
+                <version>${caffeine.version}</version>
             </dependency>
 
             <dependency>
@@ -70,7 +83,6 @@
                 <artifactId>slf4j-api</artifactId>
                 <version>${slf4j-api.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
