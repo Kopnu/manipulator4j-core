@@ -25,7 +25,7 @@ import java.util.ResourceBundle;
 import java.util.Set;
 
 /**
- * Main localization class. Searches for translations by keys from properties files.<p/> Setup:
+ * Main localization class. Searches for translations by keys from properties files.<p> Setup:
  * <blockquote><pre>
  *    Localization.init(
  *         "path/to/property",
