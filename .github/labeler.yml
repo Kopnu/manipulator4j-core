@@ -5,12 +5,12 @@ config:
   - pom.xml
 
 code:
-  - src/main/*
-  - src/main/**/*
+  - '**/src/main/*'
+  - '**/src/main/**/*'
 
 tests:
-  - src/test/*
-  - src/test/**/*
+  - '**/src/test/*'
+  - '**/src/test/**/*'
 
 documentation:
   - docs/*
