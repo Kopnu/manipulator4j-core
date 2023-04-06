@@ -11,7 +11,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
- * Copy of {@link sun.util.ResourceBundleEnumeration}. Bcz it's easier than adding some parameters to the Java module
+ * Copy of <b>sun.util.ResourceBundleEnumeration</b>. Bcz it's easier than adding some parameters to the Java module
  * system. :/ You can see class from <i>sun</i> package, but can't import.
  */
 public class ResourceBundleEnumeration implements Enumeration<String> {
