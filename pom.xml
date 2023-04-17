@@ -11,7 +11,6 @@
 
     <modules>
         <module>manipulator4j</module>
-        <module>manipulator4j-l10n</module>
     </modules>
 
     <name>Manipulator4J</name>
