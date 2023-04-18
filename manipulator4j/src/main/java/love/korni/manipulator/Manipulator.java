@@ -96,6 +96,8 @@ public class Manipulator {
                         reflections.getConstructorsAnnotatedWith(Autoinject.class).stream().map(constructor -> (Class<?>) constructor.getDeclaringClass()))
                 .filter(clazz -> !clazz.isAnnotationPresent(Gear.class))
                 .collect(Collectors.toSet());
-        log.warn("These classes use @Autoinject annotation but are not marked as @Gear: {}", classes);
+        if (!classes.isEmpty()) {
+            log.warn("These classes use @Autoinject annotation but are not marked as @Gear: {}", classes);
+        }
     }
 }

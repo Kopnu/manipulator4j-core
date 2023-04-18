@@ -21,6 +21,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -178,8 +179,8 @@ public class GearFactory {
             gearMetadata = gearMetadataByClassMap.get(clazz);
         }
 
-        // Поиск гира по Интерфейсу (если тип - интерфейс, то поиск реализации интерфейса)
-        if (gearMetadata == null && clazz.isInterface()) {
+        // Поиск гира по Интерфейсу (если тип - интерфейс или абстрактный класс, то поиск реализации интерфейса)
+        if (gearMetadata == null && (clazz.isInterface() || Modifier.isAbstract(clazz.getModifiers()))) {
             List<GearMetadata> gearMetadataResolve = new ArrayList<>();
             gearMetadataByClassMap.keySet().stream()
                     .filter(clazz::isAssignableFrom)
