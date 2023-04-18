@@ -7,7 +7,12 @@ package love.korni.manipulator.core.caldron;
 
 import love.korni.manipulator.core.annotation.Gear;
 
+import org.apache.commons.lang3.reflect.TypeUtils;
+
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +57,14 @@ public class GearFactoryUtils {
             return gearAnnotation.value();
         }
         return defaultValue;
+    }
+
+    public static boolean isCollectionType(Type type) {
+        if (type instanceof ParameterizedType parameterizedType) {
+            Type rawType = parameterizedType.getRawType();
+            return rawType != null && TypeUtils.isAssignable(rawType, Collection.class);
+        }
+        return false;
     }
 
 }

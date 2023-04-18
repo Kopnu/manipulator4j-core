@@ -74,7 +74,14 @@ public class GearFactory {
 
     @SneakyThrows
     public <T> T getGear(Type type) {
-        Class<T> loadClass = (Class<T>) this.getClass().getClassLoader().loadClass(type.getTypeName());
+        String typeName = type.getTypeName();
+        if (type instanceof ParameterizedType parameterizedType) {
+            if (GearFactoryUtils.isCollectionType(type)) {
+                Type[] actualType = parameterizedType.getActualTypeArguments();
+                return (T) getGears(actualType[0]);
+            }
+        }
+        Class<T> loadClass = (Class<T>) this.getClass().getClassLoader().loadClass(typeName);
         return getGear(loadClass);
     }
 
