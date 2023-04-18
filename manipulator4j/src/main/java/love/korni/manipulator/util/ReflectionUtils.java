@@ -48,16 +48,6 @@ public class ReflectionUtils {
                 .toList();
     }
 
-    public static Constructor<?> findDefaultConstructor(Class<?> clazz) {
-        Constructor<?> declaredConstructor = null;
-        try {
-            declaredConstructor = clazz.getDeclaredConstructor();
-        } catch (NoSuchMethodException e) {
-            // ignored
-        }
-        return declaredConstructor;
-    }
-
     public static List<Class<?>> getInterfaces(Class<?> clazz) {
         return Arrays.stream(clazz.getInterfaces()).toList();
     }
