@@ -194,9 +194,13 @@ public class GearFactory {
                     gearMetadataResolve.forEach(gmr -> sb.append(gmr.getGearName()).append("(").append(gmr.getGearClass()).append(")"));
                     throw new NoSuchGearMetadataException("So much candidates [%s] for autoinjected gear [%s]. Specify gear name.".formatted(sb, clazz));
                 }
-                return new ArrayGearMetadata(clazz, gearMetadataResolve);
+                gearMetadata = new ArrayGearMetadata(clazz, gearMetadataResolve);
             } else if (gearMetadataResolve.size() == 1) {
-                gearMetadata = gearMetadataResolve.get(0);
+                if (isManyResults) {
+                    gearMetadata = new ArrayGearMetadata(clazz, gearMetadataResolve);
+                } else {
+                    gearMetadata = gearMetadataResolve.get(0);
+                }
             }
         }
 
