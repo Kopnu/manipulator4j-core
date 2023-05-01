@@ -19,4 +19,8 @@ public class GearConstructionException extends RuntimeException {
     public GearConstructionException(String message, Throwable cause) {
         super(message, cause);
     }
+
+    public GearConstructionException(Throwable cause) {
+        super("Error while construction a gear", cause);
+    }
 }
