@@ -6,7 +6,7 @@
 package love.korni.manipulator.core.caldron.metadata;
 
 /**
- * GearType
+ * Тип шестерни в области видимости DI контейнера.
  *
  * @author Sergei_Konilov
  */

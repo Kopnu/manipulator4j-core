@@ -5,12 +5,15 @@
 
 package love.korni.manipulator.core.caldron.metadata;
 
+import love.korni.manipulator.core.caldron.GearFactory;
+import love.korni.manipulator.core.caldron.GearMetadataFactory;
+
 /**
- * ComponentMetadata
+ * Базовый интерфейс с метаинформацией о шестерне, управляемой DI контейнером.
  *
  * @author Sergei_Konilov
  */
-public interface GearMetadata {
+public sealed interface GearMetadata permits AbstractGearMetadata {
 
     String getName();
 
@@ -18,10 +21,10 @@ public interface GearMetadata {
 
     GearType getType();
 
-    Boolean isMethod();
-
     GearMetadata getParent();
 
     Class<?> getGearClass();
+
+    GearMetadataFactory getFactory(GearFactory gearFactory);
 
 }

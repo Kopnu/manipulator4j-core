@@ -5,27 +5,19 @@
 
 package love.korni.manipulator.core.caldron;
 
-import love.korni.manipulator.core.annotation.Autoinject;
 import love.korni.manipulator.core.caldron.metadata.ArrayGearMetadata;
 import love.korni.manipulator.core.caldron.metadata.ClassGearMetadata;
 import love.korni.manipulator.core.caldron.metadata.GearMetadata;
-import love.korni.manipulator.core.caldron.metadata.MethodGearMetadata;
 import love.korni.manipulator.core.exception.GearConstructionException;
 import love.korni.manipulator.core.exception.NoSuchGearMetadataException;
 import love.korni.manipulator.util.Assert;
-import love.korni.manipulator.util.ReflectionUtils;
 
 import lombok.SneakyThrows;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -37,7 +29,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * ComponentFactory
+ * Класс-фабрика для постройки классов из DI контейнера.
  *
  * @author Sergei_Konilov
  */
@@ -71,7 +63,7 @@ public class GearFactory {
         if (gearMetadata == null) {
             throw new NoSuchGearMetadataException("Unknown gear with type [%s]".formatted(type));
         }
-        return getGear(gearMetadata);
+        return getGear(gearMetadata, null);
     }
 
     @SneakyThrows
@@ -88,12 +80,20 @@ public class GearFactory {
         return getGear(loadClass);
     }
 
+    public <T> T getGear(Class<T> type, Object[] args) {
+        GearMetadata gearMetadata = getMetadata(type, null);
+        if (gearMetadata == null) {
+            throw new NoSuchGearMetadataException("Unknown gear with type [%s]".formatted(type));
+        }
+        return getGear(gearMetadata, args);
+    }
+
     protected <T> T getGear(String gearName, Class<T> type) {
         GearMetadata gearMetadata = getMetadata(type, gearName);
         if (gearMetadata == null) {
             throw new NoSuchGearMetadataException("Unknown gear with name [%s] and type [%s]".formatted(gearName, type));
         }
-        return getGear(gearMetadata);
+        return getGear(gearMetadata, null);
     }
 
     protected <T> T getGear(String gearName, Type type) throws ClassNotFoundException {
@@ -102,10 +102,10 @@ public class GearFactory {
         if (gearMetadata == null) {
             throw new NoSuchGearMetadataException("Unknown gear with name [%s] and type [%s]".formatted(gearName, type));
         }
-        return getGear(gearMetadata);
+        return getGear(gearMetadata, null);
     }
 
-    protected <T> T getGear(GearMetadata gearMetadata) {
+    protected <T> T getGear(GearMetadata gearMetadata, Object[] args) {
         Object newGear = switch (gearMetadata.getType()) {
             case SINGLETON -> {
                 Object gear = singletonByNameGears.get(gearMetadata.getGearName());
@@ -116,11 +116,11 @@ public class GearFactory {
                     yield gear;
                 }
 
-                gear = constructGear(gearMetadata);
+                gear = constructGear(gearMetadata, args);
                 registerGear(gearMetadata, gear);
                 yield gear;
             }
-            case PROTOTYPE -> constructGear(gearMetadata);
+            case PROTOTYPE -> constructGear(gearMetadata, args);
         };
 
         return (T) newGear;
@@ -134,20 +134,8 @@ public class GearFactory {
 
     protected <T> Collection<T> getGears(Class<T> type) {
         GearMetadata gearMetadata = getMetadata(type, null, true);
-
-        if (gearMetadata instanceof ArrayGearMetadata arrayGearMetadata) {
-            Collection<T> gears = new ArrayList<>();
-            List<? extends Class<?>> types = arrayGearMetadata.getGearMetadatas().stream()
-                    .map(GearMetadata::getGearClass)
-                    .toList();
-            for (Class<?> _type : types) {
-                Object gear = getGear(_type);
-                gears.add((T) gear);
-            }
-            return gears;
-        }
-
-        return Collections.emptyList();
+        GearMetadataFactory factory = gearMetadata.getFactory(this);
+        return new ArrayList<>((Collection<T>) factory.construct(null));
     }
 
     private GearMetadata createMetadata(Class<?> clazz) {
@@ -233,78 +221,16 @@ public class GearFactory {
         }
     }
 
-    private Object constructGear(GearMetadata gearMetadata) {
+    private Object constructGear(GearMetadata gearMetadata, Object[] args) {
         synchronized (singletonsCurrentlyInCreation) {
-            Object gear = null;
-
             if (singletonsCurrentlyInCreation.contains(gearMetadata.getGearName())) {
                 throw new GearConstructionException("Gear [%s] currently in construction. Circular reference? [%s]"
                         .formatted(gearMetadata.getGearName(), GearFactoryUtils.resolveCircularRef(singletonsCurrentlyInCreation, gearMetadata.getGearName())));
             }
-
             singletonsCurrentlyInCreation.add(gearMetadata.getGearName());
-            try {
-                //ToDo: Переделать на паттерн, чтобы не было привязки к типу метадаты
-                if (gearMetadata instanceof MethodGearMetadata methodGearMetadata) {
-                    Method method = methodGearMetadata.getMethod();
-                    Class<?>[] parameterTypes = method.getParameterTypes();
-                    Object[] params = Arrays.stream(parameterTypes).map(this::getGear).toArray();
-                    GearMetadata parent = methodGearMetadata.getParent();
-                    Object parentGear = getGear(parent);
-                    gear = method.invoke(parentGear, params);
-                } else if (gearMetadata instanceof ClassGearMetadata classGearMetadata) {
-                    List<Constructor<?>> constructorsAnnotated = classGearMetadata.getConstructorsAnnotated();
-                    int size = constructorsAnnotated.size();
-                    gear = switch (size) {
-                        case 0 -> {
-                            try {
-                                Class<?> gearClass = classGearMetadata.getGearClass();
-                                Constructor<?> constructor = gearClass.getDeclaredConstructor();
-                                yield constructor.newInstance();
-                            } catch (NoSuchMethodException e) {
-                                throw new GearConstructionException("Can not find declaredConstructor", e);
-                            }
-                        }
-                        case 1 -> {
-                            Constructor<?> constructor = constructorsAnnotated.get(0);
-                            Class<?>[] parameterTypes = constructor.getParameterTypes();
-                            Object[] params = Arrays.stream(parameterTypes).map(this::getGear).toArray();
-                            yield constructor.newInstance(params);
-                        }
-                        default -> throw new GearConstructionException("Found %d \"Autoinjected\" constructors. Expected one.".formatted(size));
-                    };
-                    List<Field> fieldsAnnotated = classGearMetadata.getFieldsAnnotated();
-                    for (Field field : fieldsAnnotated) {
-                        try {
-                            String injectGear = field.getAnnotation(Autoinject.class).value();
-                            ReflectionUtils.makeAccessible(field);
-                            Class<?> fieldType = field.getType();
-                            Object value;
-                            if (Collection.class.isAssignableFrom(fieldType)) {
-                                ParameterizedType genericType = (ParameterizedType) field.getGenericType();
-                                Type typeArgument = genericType.getActualTypeArguments()[0];
-                                value = getGears(typeArgument);
-                            } else {
-                                value = getGear(injectGear.isBlank() ? field.getName() : injectGear, fieldType);
-                            }
 
-                            try {
-                                field.set(gear, value);
-                            } catch (IllegalAccessException e) {
-                                throw new IllegalStateException("Could not access method or field: " + e.getMessage(), e);
-                            } catch (IllegalArgumentException e) {
-                                throw new GearConstructionException("Error while construction a gear", e);
-                            }
-                        } catch (NoSuchGearMetadataException e) {
-                            throw new GearConstructionException("Error while construction a gear " + gear.getClass(), e);
-                        }
-                    }
-
-                }
-            } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                throw new RuntimeException(e);
-            }
-
+            GearMetadataFactory factory = gearMetadata.getFactory(this);
+            Object gear = factory.construct(args);
 
             if (gear == null) {
                 throw new GearConstructionException("Can not construct a gear with type [" + gearMetadata.getGearClass() + "]");

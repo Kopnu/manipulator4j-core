@@ -7,6 +7,7 @@ package love.korni.manipulator.core.caldron.metadata;
 
 import love.korni.manipulator.core.annotation.Autoinject;
 import love.korni.manipulator.core.annotation.Gear;
+import love.korni.manipulator.core.caldron.GearMetadataFactory;
 import love.korni.manipulator.util.ReflectionUtils;
 
 import lombok.Getter;
@@ -18,14 +19,17 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
- * AbstractGearMetadata
+ * Абстрактный класс метаинформации для шестерни реализующий интерфейс {@link GearMetadata}.
+ * Содержит в себе общие компоненты необходимые для всех последующих реализаций.
+ * Анализирует
  *
  * @author Sergei_Konilov
  */
 @Getter
-public abstract class AbstractGearMetadata implements GearMetadata {
+public abstract non-sealed class AbstractGearMetadata implements GearMetadata {
 
     protected final String canonicalName;
     protected final String name;
@@ -37,6 +41,8 @@ public abstract class AbstractGearMetadata implements GearMetadata {
     protected List<Field> fieldsAnnotated;
     protected List<Method> methodsAnnotated;
     protected List<Constructor<?>> constructorsAnnotated;
+
+    protected GearMetadataFactory factory;
 
     public AbstractGearMetadata(Class<?> gearClass) {
         this(gearClass.getCanonicalName(), gearClass.getSimpleName(), gearClass);
@@ -72,6 +78,10 @@ public abstract class AbstractGearMetadata implements GearMetadata {
             name = this.gearClass.getName();
         }
         return name.toLowerCase();
+    }
+
+    protected GearMetadataFactory getFactory(Supplier<GearMetadataFactory> supplier) {
+        return factory != null ? factory : supplier.get();
     }
 
     @Override
