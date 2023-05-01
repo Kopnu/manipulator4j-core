@@ -13,10 +13,10 @@ import java.util.Locale;
 /**
  * The main interface for working with localization.
  *
- * @see DefaultLocalization
+ * @see DefaultMessageManager
  * @author Sergei_Konilov
  */
-public interface Localization {
+public interface MessageManager {
 
   String getMessage(String code) throws NoSuchMessageException;
 

@@ -27,32 +27,34 @@ import java.util.Set;
 /**
  * Main localization class. Searches for translations by keys from properties files.<p> Setup:
  * <blockquote><pre>
- *    Localization.init(
- *         "path/to/property",
- *         ...
- *   );
+ * PropertySettings settings = new PropertySettings();
+ * settings.setBasenames(new String[]{
+ *      "path/to/property",
+ *      ...
+ * });
+ * new DefaultMessageManager(settings);
  * </pre></blockquote><p>
  * <p>
  * Usage example:
  * <blockquote><pre>
- *    Localization.getMessage("key.from.property", new Object[] {"some", "args", 123});
+ * MessageManager.getMessage("key.from.property", new Object[] {"some", "args", 123});
  * </pre></blockquote><p>
  *
  * @author Sergei_Konilov
  * @see ResourceBundle
  * @see java.util.Properties
  */
-public class DefaultLocalization implements Localization {
+public class DefaultMessageManager implements MessageManager {
 
     protected static final LoadingCache<Locale, ResourceBundle> resourceBundleCache =
-            Caffeine.newBuilder().build(DefaultLocalization::getResourceBundle);
+            Caffeine.newBuilder().build(DefaultMessageManager::getResourceBundle);
     private static final Set<String> basenameSet = new LinkedHashSet<>();
 
     @Setter
     @Getter
     private Locale defaultLocale;
 
-    public DefaultLocalization(LocalizationSettings settings) {
+    public DefaultMessageManager(PropertySettings settings) {
         defaultLocale = settings.getDefaultLocale();
         if (settings.getBasenames().length > 0) {
             basenameSet.addAll(Arrays.asList(settings.getBasenames()));
