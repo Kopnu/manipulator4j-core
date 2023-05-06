@@ -1,9 +1,9 @@
 package love.korni.manipulator;
 
+import lombok.Getter;
 import love.korni.manipulator.core.annotation.Autoinject;
 import love.korni.manipulator.core.annotation.Gear;
 import love.korni.manipulator.core.caldron.Caldron;
-
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -78,6 +78,19 @@ public class AutoinjectTest {
         Assert.assertNotNull(gearOfType.s);
     }
 
+    @Test(priority = 7)
+    public void testAutoinjectAbstractFields() {
+        Caldron caldron = Manipulator.run(AutoinjectTest.class);
+
+        Rabbit gearOfType = caldron.getGearOfType(Rabbit.class);
+
+        Assert.assertNotNull(gearOfType);
+        Assert.assertNotNull(gearOfType.getEmptyClass());
+    }
+
+    @Gear
+    public static class EmptyClass {
+    }
 
     @Gear
     public static class Rabbit extends AbstractClass implements InterfaceClass {
@@ -100,7 +113,12 @@ public class AutoinjectTest {
 
     }
 
+    @Getter
     public static abstract class AbstractClass {
+
+        @Autoinject
+        private EmptyClass emptyClass;
+
     }
 
     public interface InterfaceClass {

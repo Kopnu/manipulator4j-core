@@ -13,7 +13,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * ReflectionUtils
@@ -30,15 +32,25 @@ public class ReflectionUtils {
     }
 
     public List<Field> findFieldsAnnotated(Class<?> clazz, Class<? extends Annotation> annotation) {
-        return Arrays.stream(clazz.getDeclaredFields())
-                .filter(method -> method.isAnnotationPresent(annotation))
-                .toList();
+        return getDeclaredFieldsWithParents(clazz).stream()
+            .filter(method -> method.isAnnotationPresent(annotation))
+            .toList();
+    }
+
+    private Set<Field> getDeclaredFieldsWithParents(Class<?> clazz) {
+        Set<Field> fields = new HashSet<>(List.of(clazz.getDeclaredFields()));
+
+        Class<?> superclass = clazz.getSuperclass();
+        if (superclass != null && !superclass.equals(Object.class)) {
+            fields.addAll(getDeclaredFieldsWithParents(superclass));
+        }
+        return fields;
     }
 
     public List<Method> findMethodsAnnotated(Class<?> clazz, Class<? extends Annotation> annotation) {
         return Arrays.stream(clazz.getDeclaredMethods())
-                .filter(method -> method.isAnnotationPresent(annotation))
-                .toList();
+            .filter(method -> method.isAnnotationPresent(annotation))
+            .toList();
     }
 
     public List<Annotation> getTypeAnnotations(Class<?> clazz) {
@@ -47,8 +59,8 @@ public class ReflectionUtils {
 
     public List<Constructor<?>> findConstructorsAnnotated(Class<?> clazz, Class<? extends Annotation> annotation) {
         return Arrays.stream(clazz.getDeclaredConstructors())
-                .filter(method -> method.isAnnotationPresent(annotation))
-                .toList();
+            .filter(method -> method.isAnnotationPresent(annotation))
+            .toList();
     }
 
     public List<Class<?>> getInterfaces(Class<?> clazz) {
