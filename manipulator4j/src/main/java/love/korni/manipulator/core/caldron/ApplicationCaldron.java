@@ -35,6 +35,11 @@ public class ApplicationCaldron implements Caldron {
         return getGearFactory().getGear(type, args);
     }
 
+    @Override
+    public <T> T getGearByName(String gearName, Class<T> type) {
+        return getGearFactory().getGear(gearName, type);
+    }
+
     public GearFactory getGearFactory() {
         if (gearFactory == null) {
             throw new ManipulatorRuntimeException("GearFactory is null");

@@ -88,7 +88,7 @@ public class GearFactory {
         return getGear(gearMetadata, args);
     }
 
-    protected <T> T getGear(String gearName, Class<T> type) {
+    public <T> T getGear(String gearName, Class<T> type) {
         GearMetadata gearMetadata = getMetadata(type, gearName);
         if (gearMetadata == null) {
             throw new NoSuchGearMetadataException("Unknown gear with name [%s] and type [%s]".formatted(gearName, type));

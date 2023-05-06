@@ -88,8 +88,32 @@ public class AutoinjectTest {
         Assert.assertNotNull(gearOfType.getEmptyClass());
     }
 
+    @Test(priority = 8)
+    public void testMethodInject() {
+        Caldron caldron = Manipulator.run(AutoinjectTest.class);
+
+        EmptyTwoClass emptyClassTwo = caldron.getGearByName("emptyClassTwo", EmptyTwoClass.class);
+
+        Assert.assertNotNull(emptyClassTwo);
+    }
+
+
+
     @Gear
     public static class EmptyClass {
+    }
+
+    public static class EmptyTwoClass {
+    }
+
+    public static class ConfigClass {
+
+        @Gear
+        public EmptyTwoClass emptyClassTwo() {
+            return new EmptyTwoClass();
+        }
+
+
     }
 
     @Gear
