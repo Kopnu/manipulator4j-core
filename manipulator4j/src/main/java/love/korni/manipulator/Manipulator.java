@@ -15,13 +15,21 @@ import love.korni.manipulator.core.caldron.GearFactory;
 import love.korni.manipulator.core.caldron.metadata.ClassGearMetadata;
 import love.korni.manipulator.core.caldron.metadata.GearMetadata;
 import love.korni.manipulator.core.caldron.metadata.MethodGearMetadata;
+import love.korni.manipulator.core.exception.GearConstructionException;
 import love.korni.manipulator.core.gear.args.ArgsGear;
 import love.korni.manipulator.core.gear.args.DefaultArgsGear;
 
 import lombok.extern.slf4j.Slf4j;
+import love.korni.manipulator.core.runner.Runner;
+import love.korni.manipulator.util.ConstructionUtils;
+import love.korni.manipulator.util.ReflectionUtils;
 import org.reflections.Reflections;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -68,21 +76,17 @@ public class Manipulator {
 
         checkAnnotationsUsage();
 
-        // ToDo: Отправка лога/баннера о старте конфигурации DI
+        // ToDo: Отправка лога/баннера
 
         GearFactory gearFactory = new GearFactory(gearMetadataSet);
 
         ArgsGear argsGear = new DefaultArgsGear(args);
         gearFactory.registerSingleton("argsgear", argsGear);
 
-        // Запустить CommandLineRunner'ы
-        // foreach commandLineRunner.run(args);
-        //ToDo: Реализация CommandRunner
+        runRunners(args);
 
         ApplicationCaldron applicationCaldron = new ApplicationCaldron(gearFactory);
         gearFactory.registerSingleton(applicationCaldron);
-
-        // ToDo: Отправка лога о конце конфигурации DI
 
         log.info("Manipulator4j configuration completed!");
         return applicationCaldron;
@@ -99,5 +103,22 @@ public class Manipulator {
         if (!classes.isEmpty()) {
             log.warn("These classes use @Autoinject annotation but are not marked as @Gear: {}", classes);
         }
+    }
+
+    private void runRunners(String... args) {
+        Set<Runner> runners = reflections.getSubTypesOf(Runner.class).stream()
+            .filter(runner -> !Modifier.isAbstract(runner.getModifiers()))
+            .filter(runner -> !Modifier.isInterface(runner.getModifiers()))
+            .map(runner -> {
+                try {
+                    return (Runner) ConstructionUtils.useDefaultConstructor(runner);
+                } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
+                    log.error("Exception while creating a Runner", e);
+                }
+                return null;
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+        runners.forEach(runner -> runner.run(args));
     }
 }

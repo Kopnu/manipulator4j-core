@@ -30,6 +30,11 @@ public class ReflectionUtils {
             field.setAccessible(true);
         }
     }
+    public void makeAccessible(Constructor<?> constructor) {
+        if (!Modifier.isPublic(constructor.getModifiers()) || !Modifier.isPublic(constructor.getDeclaringClass().getModifiers()) || Modifier.isFinal(constructor.getModifiers())) {
+            constructor.setAccessible(true);
+        }
+    }
 
     public List<Field> findFieldsAnnotated(Class<?> clazz, Class<? extends Annotation> annotation) {
         return getDeclaredFieldsWithParents(clazz).stream()
