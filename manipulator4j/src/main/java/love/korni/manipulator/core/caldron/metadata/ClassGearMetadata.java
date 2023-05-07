@@ -13,6 +13,7 @@ import love.korni.manipulator.core.caldron.GearFactory;
 import love.korni.manipulator.core.caldron.GearMetadataFactory;
 import love.korni.manipulator.core.exception.GearConstructionException;
 import love.korni.manipulator.core.exception.NoSuchGearMetadataException;
+import love.korni.manipulator.util.ConstructionUtils;
 import love.korni.manipulator.util.ReflectionUtils;
 
 import lombok.Getter;
@@ -56,10 +57,10 @@ public class ClassGearMetadata extends AbstractGearMetadata {
                     List<Constructor<?>> constructorsAnnotated = getConstructorsAnnotated();
                     int size = constructorsAnnotated.size();
                     if (args != null) {
-                        gear = useConstructorWithArgs(args);
+                        gear = ConstructionUtils.useConstructorWithArgs(gearClass, args);
                     } else {
                         gear = switch (size) {
-                            case 0 -> useDefaultConstructor();
+                            case 0 -> ConstructionUtils.useDefaultConstructor(gearClass);
                             case 1 -> useAutoinjectConstructor();
                             default -> throw new GearConstructionException("Found %d \"@Autoinjected\" constructors. Expected one.".formatted(size));
                         };
@@ -97,25 +98,6 @@ public class ClassGearMetadata extends AbstractGearMetadata {
                 return gear;
             }
 
-            private Object useDefaultConstructor() throws InvocationTargetException, InstantiationException, IllegalAccessException {
-                try {
-                    Constructor<?> constructor = gearClass.getDeclaredConstructor();
-                    return constructor.newInstance();
-                } catch (NoSuchMethodException e) {
-                    throw new GearConstructionException("Can not find default public declared constructor for class " + gearClass, e);
-                }
-            }
-
-            private Object useConstructorWithArgs(Object[] args) throws InvocationTargetException, InstantiationException, IllegalAccessException {
-                try {
-                    Class<?>[] classes = ReflectionUtils.getClasses(args);
-                    Constructor<?> constructor = gearClass.getDeclaredConstructor(classes);
-                    return constructor.newInstance(args);
-                } catch (NoSuchMethodException e) {
-                    Class<?>[] classes = ReflectionUtils.getClasses(args);
-                    throw new GearConstructionException("Can not find public declared constructor with attributes: " + Arrays.toString(classes), e);
-                }
-            }
 
             private Object useAutoinjectConstructor() throws InvocationTargetException, InstantiationException, IllegalAccessException {
                 Constructor<?> constructor = constructorsAnnotated.get(0);

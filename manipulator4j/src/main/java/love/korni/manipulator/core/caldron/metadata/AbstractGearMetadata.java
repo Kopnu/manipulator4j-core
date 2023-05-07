@@ -55,7 +55,7 @@ public abstract non-sealed class AbstractGearMetadata implements GearMetadata {
     public AbstractGearMetadata(String canonicalName, String name, Class<?> gearClass) {
         this.gearClass = gearClass;
         this.canonicalName = StringUtils.isEmpty(canonicalName) ? gearClass.getCanonicalName() : canonicalName;
-        this.name = StringUtils.isEmpty(name) ? gearClass.getSimpleName() : name;
+        this.name = StringUtils.isBlank(name) ? gearClass.getSimpleName() : name;
         analyzeGear();
         Optional<Gear> gearAnnotation = typeAnnotations.stream().filter(annotation -> annotation instanceof Gear).map(annotation -> (Gear) annotation).findFirst();
         this.type = gearAnnotation.isPresent() ? gearAnnotation.get().scope() : GearType.SINGLETON;

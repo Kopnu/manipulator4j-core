@@ -9,6 +9,7 @@ import love.korni.manipulator.core.annotation.Gear;
 import love.korni.manipulator.core.caldron.GearFactory;
 import love.korni.manipulator.core.caldron.GearMetadataFactory;
 import love.korni.manipulator.core.exception.GearConstructionException;
+import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -24,7 +25,7 @@ public class MethodGearMetadata extends AbstractGearMetadata {
     private final Method method;
 
     public MethodGearMetadata(Method method) {
-        super(method.getAnnotation(Gear.class).value(), method.getReturnType());
+        super(name(method), method.getReturnType());
         this.method = method;
         this.parent = new ClassGearMetadata(method.getDeclaringClass());
     }
@@ -53,5 +54,13 @@ public class MethodGearMetadata extends AbstractGearMetadata {
                 return Arrays.stream(parameterTypes).map(gearFactory::getGear).toArray();
             }
         });
+    }
+
+    private static String name(Method method) {
+        String gearValue = method.getAnnotation(Gear.class).value();
+        if (StringUtils.isBlank(gearValue)) {
+            gearValue = method.getName();
+        }
+        return gearValue;
     }
 }

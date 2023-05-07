@@ -47,5 +47,14 @@ public interface Caldron {
      */
     <T> T getGearOfType(Class<T> type, Object... args);
 
+    /**
+     * Получить шестерню по имени и типу из DI контейнера, если была создана ранее.
+     * В противном случае будет произведён процесс создания шестерни.
+     * @param gearName имя шестерни
+     * @param type тип класса
+     * @return объект типа Т
+     */
+    <T> T getGearByName(String gearName, Class<T> type);
+
     GearFactory getGearFactory();
 }
