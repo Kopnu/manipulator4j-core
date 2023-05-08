@@ -60,7 +60,7 @@ public class ClassGearMetadata extends AbstractGearMetadata {
                         gear = ConstructionUtils.useConstructorWithArgs(gearClass, args);
                     } else {
                         gear = switch (size) {
-                            case 0 -> ConstructionUtils.useDefaultConstructor(gearClass);
+                            case 0 -> useOneDefaultConstructor();
                             case 1 -> useAutoinjectConstructor();
                             default -> throw new GearConstructionException("Found %d \"@Autoinjected\" constructors. Expected one.".formatted(size));
                         };
@@ -98,6 +98,21 @@ public class ClassGearMetadata extends AbstractGearMetadata {
                 return gear;
             }
 
+            private Object useOneDefaultConstructor() throws InvocationTargetException, InstantiationException, IllegalAccessException {
+                try {
+                    return ConstructionUtils.useDefaultConstructor(gearClass);
+                } catch (GearConstructionException e) {
+                    Constructor<?>[] declaredConstructors = gearClass.getDeclaredConstructors();
+                    if (declaredConstructors.length == 1) {
+                        Constructor<?> constructor = declaredConstructors[0];
+                        Object[] args = Arrays.stream(constructor.getGenericParameterTypes())
+                            .map(gearFactory::getGear)
+                            .toArray();
+                        return constructor.newInstance(args);
+                    }
+                    throw e;
+                }
+            }
 
             private Object useAutoinjectConstructor() throws InvocationTargetException, InstantiationException, IllegalAccessException {
                 Constructor<?> constructor = constructorsAnnotated.get(0);
