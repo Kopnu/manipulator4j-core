@@ -1,6 +1,7 @@
 package love.korni.manipulator;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import love.korni.manipulator.core.annotation.Autoinject;
 import love.korni.manipulator.core.annotation.Gear;
 import love.korni.manipulator.core.caldron.Caldron;
@@ -34,8 +35,7 @@ public class AutoinjectTest {
         Assert.assertNotNull(gearOfType.rabbit);
     }
 
-    //ToDo: https://github.com/Kopnu/manipulator4j-core/issues/9
-    //  @Test(priority = 3)
+    @Test(priority = 3)
     public void testAutoinjectConstructorWithoutAnnotation() {
         Caldron caldron = Manipulator.run(AutoinjectTest.class);
 
@@ -95,6 +95,15 @@ public class AutoinjectTest {
         EmptyTwoClass emptyClassTwo = caldron.getGearByName("emptyClassTwo", EmptyTwoClass.class);
 
         Assert.assertNotNull(emptyClassTwo);
+    }
+
+    @Test(priority = 9)
+    public void testUseDefaultConstructor() {
+        Caldron caldron = Manipulator.run(ConstructorWithLombokClassTest.class);
+
+        ConstructorWithLombokClassTest gear = caldron.getGearOfType(ConstructorWithLombokClassTest.class);
+
+        Assert.assertNotNull(gear);
     }
 
 
@@ -187,6 +196,14 @@ public class AutoinjectTest {
     public static class ListClassTest {
         @Autoinject
         private List<InterfaceClass> interfaceClasses;
+    }
+
+    @Gear
+    @RequiredArgsConstructor
+    public static class ConstructorWithLombokClassTest {
+
+        private final EmptyClass emptyClass;
+
     }
 
 }

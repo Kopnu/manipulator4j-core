@@ -25,11 +25,14 @@ import java.util.Set;
 @UtilityClass
 public class ReflectionUtils {
 
+    // Добавить возможность использования единственного не дефолтного конструктора в классе
+
     public void makeAccessible(Field field) {
         if (!Modifier.isPublic(field.getModifiers()) || !Modifier.isPublic(field.getDeclaringClass().getModifiers()) || Modifier.isFinal(field.getModifiers())) {
             field.setAccessible(true);
         }
     }
+
     public void makeAccessible(Constructor<?> constructor) {
         if (!Modifier.isPublic(constructor.getModifiers()) || !Modifier.isPublic(constructor.getDeclaringClass().getModifiers()) || Modifier.isFinal(constructor.getModifiers())) {
             constructor.setAccessible(true);
