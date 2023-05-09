@@ -15,22 +15,17 @@ import love.korni.manipulator.core.caldron.GearFactory;
 import love.korni.manipulator.core.caldron.metadata.ClassGearMetadata;
 import love.korni.manipulator.core.caldron.metadata.GearMetadata;
 import love.korni.manipulator.core.caldron.metadata.MethodGearMetadata;
-import love.korni.manipulator.core.exception.GearConstructionException;
 import love.korni.manipulator.core.gear.args.ArgsGear;
 import love.korni.manipulator.core.gear.args.DefaultArgsGear;
 import love.korni.manipulator.core.gear.file.FileManager;
 import love.korni.manipulator.core.gear.file.ResourceFileManager;
+import love.korni.manipulator.core.runner.Runner;
 import love.korni.manipulator.logging.LoggerConfigurer;
+import love.korni.manipulator.util.ConstructionUtils;
 
 import lombok.extern.slf4j.Slf4j;
-import love.korni.manipulator.core.runner.Runner;
-import love.korni.manipulator.util.ConstructionUtils;
-import love.korni.manipulator.util.ReflectionUtils;
-
-import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.HashSet;
@@ -81,28 +76,14 @@ public class Manipulator {
         gearMetadataSet.addAll(reflections.getMethodsAnnotatedWith(Gear.class).parallelStream().map(MethodGearMetadata::new).collect(Collectors.toSet()));
         gearMetadataSet.addAll(reflections.getTypesAnnotatedWith(Gear.class).parallelStream().map(ClassGearMetadata::new).collect(Collectors.toSet()));
 
-        log.debug("Checking the correctness of the use of annotations");
+        log.debug("Checking a correctness of the use of annotations");
         checkAnnotationsUsage();
 
         log.debug("Setup DI container");
-        GearFactory gearFactory = new GearFactory(gearMetadataSet);
-
-        FileManager fileManager = new ResourceFileManager();
-        gearFactory.registerSingleton("filemanager", fileManager);
-
-        LoggerConfigurer loggerConfigurer = new LoggerConfigurer(fileManager);
-        loggerConfigurer.configure("base-manipulator.yml");
-
-        String banner = fileManager.readFileAsString(ResourceFileManager.CLASSPATH + "banner.txt");
-        log.info(banner);
+        ApplicationCaldron applicationCaldron = setupApplicationCaldron(gearMetadataSet, args);
 
         log.debug("Launching Runners");
-        ArgsGear argsGear = new DefaultArgsGear(args);
-        gearFactory.registerSingleton("argsgear", argsGear);
         runRunners(args);
-
-        ApplicationCaldron applicationCaldron = new ApplicationCaldron(gearFactory);
-        gearFactory.registerSingleton(applicationCaldron);
 
         log.info("Manipulator4j configuration completed!");
         return applicationCaldron;
@@ -121,20 +102,41 @@ public class Manipulator {
         }
     }
 
+    private ApplicationCaldron setupApplicationCaldron(Set<GearMetadata> gearMetadataSet, String... args) {
+        GearFactory gearFactory = new GearFactory(gearMetadataSet);
+
+        ArgsGear argsGear = new DefaultArgsGear(args);
+        gearFactory.registerSingleton("argsgear", argsGear);
+
+        FileManager fileManager = new ResourceFileManager();
+        gearFactory.registerSingleton("filemanager", fileManager);
+
+        LoggerConfigurer loggerConfigurer = new LoggerConfigurer(fileManager);
+        loggerConfigurer.configure("base-manipulator.yml");
+
+        String banner = fileManager.readFileAsString(ResourceFileManager.CLASSPATH + "banner.txt");
+        log.info(banner);
+
+        ApplicationCaldron applicationCaldron = new ApplicationCaldron(gearFactory);
+        gearFactory.registerSingleton(applicationCaldron);
+
+        return applicationCaldron;
+    }
+
     private void runRunners(String... args) {
         Set<Runner> runners = reflections.getSubTypesOf(Runner.class).stream()
-            .filter(runner -> !Modifier.isAbstract(runner.getModifiers()))
-            .filter(runner -> !Modifier.isInterface(runner.getModifiers()))
-            .map(runner -> {
-                try {
-                    return (Runner) ConstructionUtils.useDefaultConstructor(runner);
-                } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
-                    log.error("Exception while creating a Runner", e);
-                }
-                return null;
-            })
-            .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
+                .filter(runner -> !Modifier.isAbstract(runner.getModifiers()))
+                .filter(runner -> !Modifier.isInterface(runner.getModifiers()))
+                .map(runner -> {
+                    try {
+                        return (Runner) ConstructionUtils.useDefaultConstructor(runner);
+                    } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
+                        log.error("Exception while creating a Runner", e);
+                    }
+                    return null;
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
         runners.forEach(runner -> runner.run(args));
     }
 }
