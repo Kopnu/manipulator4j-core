@@ -35,8 +35,7 @@ public class AutoinjectTest {
         Assert.assertNotNull(gearOfType.rabbit);
     }
 
-    //ToDo: https://github.com/Kopnu/manipulator4j-core/issues/9
-    //  @Test(priority = 3)
+    @Test(priority = 3)
     public void testAutoinjectConstructorWithoutAnnotation() {
         Caldron caldron = Manipulator.run(AutoinjectTest.class);
 
@@ -100,9 +99,9 @@ public class AutoinjectTest {
 
     @Test(priority = 9)
     public void testUseDefaultConstructor() {
-        Caldron caldron = Manipulator.run(UseOneConstructorTest.class);
+        Caldron caldron = Manipulator.run(ConstructorWithLombokClassTest.class);
 
-        UseOneConstructorTest gear = caldron.getGearOfType(UseOneConstructorTest.class);
+        ConstructorWithLombokClassTest gear = caldron.getGearOfType(ConstructorWithLombokClassTest.class);
 
         Assert.assertNotNull(gear);
     }
@@ -201,7 +200,7 @@ public class AutoinjectTest {
 
     @Gear
     @RequiredArgsConstructor
-    public static class UseOneConstructorTest {
+    public static class ConstructorWithLombokClassTest {
 
         private final EmptyClass emptyClass;
 
