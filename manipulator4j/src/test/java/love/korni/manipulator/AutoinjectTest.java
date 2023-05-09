@@ -122,7 +122,6 @@ public class AutoinjectTest {
             return new EmptyTwoClass();
         }
 
-
     }
 
     @Gear

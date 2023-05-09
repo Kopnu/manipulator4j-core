@@ -18,11 +18,16 @@ import love.korni.manipulator.core.caldron.metadata.MethodGearMetadata;
 import love.korni.manipulator.core.exception.GearConstructionException;
 import love.korni.manipulator.core.gear.args.ArgsGear;
 import love.korni.manipulator.core.gear.args.DefaultArgsGear;
+import love.korni.manipulator.core.gear.file.FileManager;
+import love.korni.manipulator.core.gear.file.ResourceFileManager;
+import love.korni.manipulator.logging.LoggerConfigurer;
 
 import lombok.extern.slf4j.Slf4j;
 import love.korni.manipulator.core.runner.Runner;
 import love.korni.manipulator.util.ConstructionUtils;
 import love.korni.manipulator.util.ReflectionUtils;
+
+import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
 
 import java.lang.reflect.Constructor;
@@ -70,19 +75,30 @@ public class Manipulator {
 
     private Caldron manipulate(String[] args) {
         log.info("Manipulator4j configuration starting");
+
+        log.debug("Class tree analysis");
         Set<GearMetadata> gearMetadataSet = new HashSet<>();
         gearMetadataSet.addAll(reflections.getMethodsAnnotatedWith(Gear.class).parallelStream().map(MethodGearMetadata::new).collect(Collectors.toSet()));
         gearMetadataSet.addAll(reflections.getTypesAnnotatedWith(Gear.class).parallelStream().map(ClassGearMetadata::new).collect(Collectors.toSet()));
 
+        log.debug("Checking the correctness of the use of annotations");
         checkAnnotationsUsage();
 
-        // ToDo: Отправка лога/баннера
-
+        log.debug("Setup DI container");
         GearFactory gearFactory = new GearFactory(gearMetadataSet);
 
+        FileManager fileManager = new ResourceFileManager();
+        gearFactory.registerSingleton("filemanager", fileManager);
+
+        LoggerConfigurer loggerConfigurer = new LoggerConfigurer(fileManager);
+        loggerConfigurer.configure("base-manipulator.yml");
+
+        String banner = fileManager.readFileAsString(ResourceFileManager.CLASSPATH + "banner.txt");
+        log.info(banner);
+
+        log.debug("Launching Runners");
         ArgsGear argsGear = new DefaultArgsGear(args);
         gearFactory.registerSingleton("argsgear", argsGear);
-
         runRunners(args);
 
         ApplicationCaldron applicationCaldron = new ApplicationCaldron(gearFactory);
