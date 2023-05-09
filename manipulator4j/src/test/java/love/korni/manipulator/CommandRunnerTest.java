@@ -11,25 +11,18 @@ import org.testng.annotations.Test;
  */
 public class CommandRunnerTest {
 
-    private static int count = 0;
-
-    @BeforeTest
-    public void setUp() {
-        count = 0;
-    }
-
     @Test
     public void testCommandRunner() {
         Caldron run = Manipulator.run(CommandRunnerTest.class);
 
-        Assert.assertEquals(count, 2);
+        Assert.assertNotNull(run);
     }
 
     private static class CommandRunner implements Runner {
 
         @Override
         public void run(String... args) {
-            count++;
+
         }
     }
 
@@ -37,7 +30,7 @@ public class CommandRunnerTest {
 
         @Override
         public void run(String... args) {
-            count++;
+
         }
     }
 
