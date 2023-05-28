@@ -8,7 +8,7 @@ package love.korni.manipulator.core.annotation;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 
-import love.korni.manipulator.core.caldron.metadata.GearType;
+import love.korni.manipulator.core.caldron.metadata.GearScope;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -25,6 +25,8 @@ public @interface Gear {
 
     String value() default "";
 
-    GearType scope() default GearType.SINGLETON;
+    GearScope scope() default GearScope.SINGLETON;
+
+    String[] profiles() default "default";
 
 }

@@ -15,11 +15,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * CommandLineArgs
- *
  * @author Sergei_Konilov
  */
-public class CommandLineArgs {
+class CommandLineArgs {
 
     private final Map<String, List<String>> optionArgs = new HashMap<>();
     private final List<String> nonOptionArgs = new ArrayList<>();

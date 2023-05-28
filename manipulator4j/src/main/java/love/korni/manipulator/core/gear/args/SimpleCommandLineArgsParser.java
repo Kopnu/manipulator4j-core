@@ -6,8 +6,6 @@
 package love.korni.manipulator.core.gear.args;
 
 /**
- * SimpleCommandLineArgsParser
- *
  * @author Sergei_Konilov
  */
 class SimpleCommandLineArgsParser {

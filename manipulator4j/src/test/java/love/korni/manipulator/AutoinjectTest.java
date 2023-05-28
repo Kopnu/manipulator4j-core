@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import love.korni.manipulator.core.annotation.Autoinject;
 import love.korni.manipulator.core.annotation.Gear;
 import love.korni.manipulator.core.caldron.Caldron;
+import love.korni.manipulator.core.exception.NoSuchGearMetadataException;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -106,7 +108,19 @@ public class AutoinjectTest {
         Assert.assertNotNull(gear);
     }
 
+    @Test(priority = 10)
+    public void testProfileActive() {
+        Caldron caldron = Manipulator.run(ConstructorWithLombokClassTest.class, new String[]{"--profiles=local"});
+        ClassWithLocalProfile gear = caldron.getGearOfType(ClassWithLocalProfile.class);
 
+        Assert.assertNotNull(gear);
+    }
+
+    @Test(priority = 11)
+    public void testProfileNotActive() {
+        Caldron caldron = Manipulator.run(ConstructorWithLombokClassTest.class);
+        Assert.assertThrows(NoSuchGearMetadataException.class, () -> caldron.getGearOfType(ClassWithLocalProfile.class));
+    }
 
     @Gear
     public static class EmptyClass {
@@ -143,6 +157,10 @@ public class AutoinjectTest {
             this.s = s;
         }
 
+    }
+
+    @Gear(profiles = {"local"})
+    public static class ClassWithLocalProfile {
     }
 
     @Getter

@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * DefaultArgsComponent
- *
  * @author Sergei_Konilov
  */
 public class DefaultArgsGear implements ArgsGear {

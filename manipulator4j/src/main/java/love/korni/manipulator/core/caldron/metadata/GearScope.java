@@ -10,7 +10,7 @@ package love.korni.manipulator.core.caldron.metadata;
  *
  * @author Sergei_Konilov
  */
-public enum GearType {
+public enum GearScope {
 
     SINGLETON,
 

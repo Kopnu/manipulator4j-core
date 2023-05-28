@@ -9,18 +9,24 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * ArgsComponent
- *
  * @author Sergei_Konilov
  */
 public interface ArgsGear {
 
+    /**
+     * @return исходный массив аргументов
+     */
     String[] getSourceArgs();
 
     Set<String> getOptionNames();
 
     boolean containsOption(String name);
 
+    /**
+     * Возвращает value аргумента по паттерну "--name=value"
+     *
+     * @return значение аргумента
+     */
     List<String> getOptionValues(String name);
 
     List<String> getNonOptionArgs();
