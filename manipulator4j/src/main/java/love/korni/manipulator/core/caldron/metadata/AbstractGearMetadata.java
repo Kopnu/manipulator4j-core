@@ -31,10 +31,11 @@ import java.util.function.Supplier;
 @Getter
 public abstract non-sealed class AbstractGearMetadata implements GearMetadata {
 
+    protected final Class<?> gearClass;
     protected final String canonicalName;
     protected final String name;
-    protected final GearType type;
-    protected final Class<?> gearClass;
+    protected final GearScope scope;
+    protected final String[] profiles;
 
     protected GearMetadata parent;
     protected List<Annotation> typeAnnotations;
@@ -57,8 +58,9 @@ public abstract non-sealed class AbstractGearMetadata implements GearMetadata {
         this.canonicalName = StringUtils.isEmpty(canonicalName) ? gearClass.getCanonicalName() : canonicalName;
         this.name = StringUtils.isBlank(name) ? gearClass.getSimpleName() : name;
         analyzeGear();
-        Optional<Gear> gearAnnotation = typeAnnotations.stream().filter(annotation -> annotation instanceof Gear).map(annotation -> (Gear) annotation).findFirst();
-        this.type = gearAnnotation.isPresent() ? gearAnnotation.get().scope() : GearType.SINGLETON;
+        Optional<Gear> gearAnnotation = getTypeAnnotation(Gear.class);
+        this.scope = gearAnnotation.map(Gear::scope).orElse(GearScope.SINGLETON);
+        this.profiles = gearAnnotation.map(Gear::profiles).orElse(new String[]{"default"});
     }
 
     private void analyzeGear() {
@@ -84,13 +86,21 @@ public abstract non-sealed class AbstractGearMetadata implements GearMetadata {
         return factory != null ? factory : supplier.get();
     }
 
+    @SuppressWarnings("unchecked")
+    protected <T> Optional<T> getTypeAnnotation(Class<T> annotationClass) {
+        return typeAnnotations.stream()
+                .filter(annotation -> annotationClass.isAssignableFrom(annotation.annotationType()))
+                .map(annotation -> (T) annotation)
+                .findFirst();
+    }
+
     @Override
     public String toString() {
         return "AbstractGearMetadata{" +
                 "gearName='" + getGearName() + '\'' +
                 ", canonicalName='" + canonicalName + '\'' +
                 ", name='" + name + '\'' +
-                ", type=" + type +
+                ", type=" + scope +
                 ", gearClass=" + gearClass +
                 ", parent=" + parent +
                 '}';

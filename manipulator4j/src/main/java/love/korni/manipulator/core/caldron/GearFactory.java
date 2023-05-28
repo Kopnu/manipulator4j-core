@@ -10,9 +10,12 @@ import love.korni.manipulator.core.caldron.metadata.ClassGearMetadata;
 import love.korni.manipulator.core.caldron.metadata.GearMetadata;
 import love.korni.manipulator.core.exception.GearConstructionException;
 import love.korni.manipulator.core.exception.NoSuchGearMetadataException;
+import love.korni.manipulator.core.gear.args.ArgsGear;
 import love.korni.manipulator.util.Assert;
 
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
@@ -33,6 +36,7 @@ import java.util.stream.Collectors;
  *
  * @author Sergei_Konilov
  */
+@Slf4j
 public class GearFactory {
 
     private final Map<String, Object> singletonByNameGears = new ConcurrentHashMap<>(64);
@@ -55,6 +59,7 @@ public class GearFactory {
     }
 
     public void registerSingleton(String name, Object gear) {
+        log.trace("Register singleton [{}]: {}", name, gear);
         registerGear(name, gear);
     }
 
@@ -106,7 +111,7 @@ public class GearFactory {
     }
 
     protected <T> T getGear(GearMetadata gearMetadata, Object[] args) {
-        Object newGear = switch (gearMetadata.getType()) {
+        Object newGear = switch (gearMetadata.getScope()) {
             case SINGLETON -> {
                 Object gear = singletonByNameGears.get(gearMetadata.getGearName());
                 if (gear == null) {
@@ -192,6 +197,8 @@ public class GearFactory {
             }
         }
 
+        gearMetadata = filterByProfilesActive(gearMetadata);
+
         return gearMetadata;
     }
 
@@ -238,6 +245,23 @@ public class GearFactory {
             singletonsCurrentlyInCreation.remove(gearMetadata.getGearName());
             return gear;
         }
+    }
+
+    private GearMetadata filterByProfilesActive(GearMetadata gearMetadata) {
+        if (gearMetadata != null) {
+            ArgsGear argsGear = (ArgsGear) singletonByNameGears.get("argsgear");
+            List<String> propertyProfiles = argsGear.getOptionValues("profiles");
+
+            if (CollectionUtils.isEmpty(propertyProfiles)) {
+                propertyProfiles = List.of("default");
+            }
+
+            List<String> profiles = List.of(gearMetadata.getProfiles());
+            if (CollectionUtils.containsAny(profiles, propertyProfiles)) {
+                return gearMetadata;
+            }
+        }
+        return null;
     }
 
 }
