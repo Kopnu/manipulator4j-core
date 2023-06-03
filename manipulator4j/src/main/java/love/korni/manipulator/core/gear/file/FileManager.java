@@ -9,6 +9,7 @@ import love.korni.manipulator.core.gear.file.exception.FileManagerException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 /**
  * Интерфейс для получения файлов.
@@ -20,5 +21,7 @@ public interface FileManager {
     InputStream readFile(String path) throws FileManagerException;
 
     String readFileAsString(String path) throws FileManagerException;
+
+    List<String> list();
 
 }

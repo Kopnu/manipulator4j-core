@@ -7,8 +7,15 @@ package love.korni.manipulator.core.gear.file;
 
 import love.korni.manipulator.core.gear.file.exception.FileManagerException;
 
+import org.apache.commons.collections4.CollectionUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -41,6 +48,15 @@ public class ResourceFileManager implements FileManager {
             return new String(inputStream.readAllBytes());
         } catch (IOException e) {
             throw new FileManagerException(String.format("Exception while reading a file by path [%s]", path), e);
+        }
+    }
+
+    public List<String> list() {
+        try {
+            Enumeration<URL> resources = getClass().getClassLoader().getResources("");
+            return Collections.list(resources).stream().map(URL::getPath).toList();
+        } catch (IOException e) {
+            throw new FileManagerException(e);
         }
     }
 }

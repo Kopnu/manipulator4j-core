@@ -21,6 +21,8 @@ import love.korni.manipulator.core.gear.file.FileManager;
 import love.korni.manipulator.core.gear.file.ResourceFileManager;
 import love.korni.manipulator.core.runner.Runner;
 import love.korni.manipulator.logging.LoggerConfigurer;
+import love.korni.manipulator.property.DefaultConfigManager;
+import love.korni.manipulator.property.ConfigManager;
 import love.korni.manipulator.util.ConstructionUtils;
 
 import lombok.extern.slf4j.Slf4j;
@@ -111,8 +113,11 @@ public class Manipulator {
         FileManager fileManager = new ResourceFileManager();
         gearFactory.registerSingleton("filemanager", fileManager);
 
-        LoggerConfigurer loggerConfigurer = new LoggerConfigurer(fileManager);
-        loggerConfigurer.configure("base-manipulator.yml");
+        ConfigManager configManager = new DefaultConfigManager(fileManager);
+        gearFactory.registerSingleton("propertymanager", configManager);
+
+        LoggerConfigurer loggerConfigurer = new LoggerConfigurer();
+        loggerConfigurer.configure(configManager.getConfig("logging"));
 
         String banner = fileManager.readFileAsString(ResourceFileManager.CLASSPATH + "banner.txt");
         log.info(banner);
