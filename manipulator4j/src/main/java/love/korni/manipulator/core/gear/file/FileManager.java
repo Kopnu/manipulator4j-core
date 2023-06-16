@@ -24,4 +24,5 @@ public interface FileManager {
 
     List<String> list();
 
+    boolean fileExists(String path);
 }

@@ -7,12 +7,9 @@ package love.korni.manipulator.core.gear.file;
 
 import love.korni.manipulator.core.gear.file.exception.FileManagerException;
 
-import org.apache.commons.collections4.CollectionUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -51,6 +48,7 @@ public class ResourceFileManager implements FileManager {
         }
     }
 
+    @Override
     public List<String> list() {
         try {
             Enumeration<URL> resources = getClass().getClassLoader().getResources("");
@@ -58,5 +56,16 @@ public class ResourceFileManager implements FileManager {
         } catch (IOException e) {
             throw new FileManagerException(e);
         }
+    }
+
+    @Override
+    public boolean fileExists(String path) {
+        if (path.startsWith(CLASSPATH)) {
+            path = path.replace(CLASSPATH, "");
+            InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(path);
+            return resourceAsStream != null;
+        }
+        throw new FileManagerException(
+                String.format("Unsupported path format: [%s]. Use \"classpath:dir/example.yml\"", path));
     }
 }

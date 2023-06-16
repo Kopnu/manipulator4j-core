@@ -38,7 +38,7 @@ class PropertyConfigHolder {
 
     private JsonNode readConfigFile(String path) {
         try {
-            InputStream inputStream = fileManager.readFile(ResourceFileManager.CLASSPATH + path);
+            InputStream inputStream = fileManager.readFile(path);
             return objectMapper.readTree(inputStream);
         } catch (IOException e) {
             throw new LoggerConfigurationException(e);
