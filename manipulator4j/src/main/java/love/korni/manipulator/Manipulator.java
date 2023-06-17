@@ -113,8 +113,8 @@ public class Manipulator {
         FileManager fileManager = new ResourceFileManager();
         gearFactory.registerSingleton("filemanager", fileManager);
 
-        ConfigManager configManager = new DefaultConfigManager(fileManager);
-        gearFactory.registerSingleton("propertymanager", configManager);
+        ConfigManager configManager = new DefaultConfigManager(fileManager, argsGear.getOptionValues("profiles"));
+        gearFactory.registerSingleton("configmanager", configManager);
 
         LoggerConfigurer loggerConfigurer = new LoggerConfigurer();
         loggerConfigurer.configure(configManager.getConfig("logging"));

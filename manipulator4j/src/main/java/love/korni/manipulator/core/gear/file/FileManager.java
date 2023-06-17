@@ -22,7 +22,5 @@ public interface FileManager {
 
     String readFileAsString(String path) throws FileManagerException;
 
-    List<String> list();
-
     boolean fileExists(String path);
 }

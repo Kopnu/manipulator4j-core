@@ -9,5 +9,5 @@ public interface ConfigManager {
 
     JsonNode getConfig(String path);
 
-    <T> T getValue(String path, Class<T> type);
+    String getAsText(String path);
 }

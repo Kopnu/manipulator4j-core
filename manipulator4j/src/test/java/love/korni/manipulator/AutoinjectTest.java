@@ -1,16 +1,25 @@
 package love.korni.manipulator;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import love.korni.manipulator.core.annotation.Autoinject;
 import love.korni.manipulator.core.annotation.Gear;
 import love.korni.manipulator.core.caldron.Caldron;
 import love.korni.manipulator.core.exception.NoSuchGearMetadataException;
+import love.korni.manipulator.property.ConfigManager;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.MissingNode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.List;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Sergei_Kornilov
@@ -55,7 +64,7 @@ public class AutoinjectTest {
 
         Assert.assertNotNull(gearOfType);
         Assert.assertNotNull(gearOfType.abstractClass);
-        Assert.assertTrue(gearOfType.abstractClass instanceof Rabbit);
+        assertTrue(gearOfType.abstractClass instanceof Rabbit);
     }
 
     @Test(priority = 5)
@@ -120,6 +129,38 @@ public class AutoinjectTest {
     public void testProfileNotActive() {
         Caldron caldron = Manipulator.run(ConstructorWithLombokClassTest.class);
         Assert.assertThrows(NoSuchGearMetadataException.class, () -> caldron.getGearOfType(ClassWithLocalProfile.class));
+    }
+
+    @Test(priority = 12)
+    public void testPropertyRead() {
+        Caldron caldron = Manipulator.run(AutoinjectTest.class);
+        ConfigManager configManager = caldron.getGearOfType(ConfigManager.class);
+
+        JsonNode config = configManager.getConfig("");
+        assertNotNull(config);
+        assertFalse(config instanceof MissingNode);
+
+        String somethingValue = configManager.getAsText("path.to.something");
+        assertEquals(somethingValue, "INFO");
+
+        String loggingLevel = configManager.getAsText("logging.level.ROOT");
+        assertEquals(loggingLevel, "DEBUG");
+
+        JsonNode profileLocal = configManager.getConfig("profile-local");
+        assertTrue(profileLocal instanceof MissingNode);
+        String local = configManager.getAsText("local");
+        assertNull(local);
+    }
+
+    @Test(priority = 13)
+    public void testPropertyReadWithProfileActive() {
+        Caldron caldron = Manipulator.run(AutoinjectTest.class, new String[]{"--profiles=local"});
+        ConfigManager configManager = caldron.getGearOfType(ConfigManager.class);
+        Assert.assertNotNull(configManager);
+
+        assertTrue(configManager.getConfig("profile-local") instanceof MissingNode);
+        assertEquals("LOCAL", configManager.getAsText("local"));
+        assertNull(configManager.getAsText("dev"));
     }
 
     @Gear

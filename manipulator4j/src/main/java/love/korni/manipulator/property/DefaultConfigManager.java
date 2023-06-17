@@ -3,16 +3,24 @@ package love.korni.manipulator.property;
 import love.korni.manipulator.core.gear.file.FileManager;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.MissingNode;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.List;
 
 /**
  * @author Sergei_Kornilov
  */
 public class DefaultConfigManager implements ConfigManager {
 
-    private final PropertyConfigSourceReader propertyConfigSourceReader;
+    private final PropertyConfigReader propertyConfigReader;
 
     public DefaultConfigManager(FileManager fileManager) {
-        this.propertyConfigSourceReader = new PropertyConfigSourceReader(fileManager);
+        this(fileManager, List.of());
+    }
+
+    public DefaultConfigManager(FileManager fileManager, List<String> propertyProfiles) {
+        this.propertyConfigReader = new PropertyConfigReader(fileManager, propertyProfiles);
     }
 
     /**
@@ -22,11 +30,10 @@ public class DefaultConfigManager implements ConfigManager {
      */
     @Override
     public JsonNode getConfig(String path) {
-        boolean isContains = propertyConfigSourceReader.contains(path);
-        if (isContains) {
-            return propertyConfigSourceReader.getNode(path);
+        if (StringUtils.isBlank(path)) {
+            return propertyConfigReader.getPropertyNode();
         }
-        return null;
+        return getByPath(propertyConfigReader.getPropertyNode(), path);
     }
 
     /**
@@ -35,15 +42,19 @@ public class DefaultConfigManager implements ConfigManager {
      * @param path строка вида "path.to.property"
      */
     @Override
-    public <T> T getValue(String path, Class<T> type) {
-        boolean isContains = propertyConfigSourceReader.contains(path);
-        if (isContains) {
-            JsonNode node = propertyConfigSourceReader.getNode(path);
-            if (node.isValueNode()) {
-                return ;
-            }
+    public String getAsText(String path) {
+        JsonNode node = getByPath(propertyConfigReader.getPropertyNode(), path);
+        if (node instanceof MissingNode) {
+            return null;
         }
-        return null;
+        return node.asText();
+    }
+
+    private JsonNode getByPath(JsonNode node, String path) {
+        for (String _path : path.split("\\.")) {
+            node = node.get(_path);
+        }
+        return node != null ? node : MissingNode.getInstance();
     }
 
 }

@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Имплементация {@link FileManager} для доступа к файлам из resource.
@@ -31,30 +32,20 @@ public class ResourceFileManager implements FileManager {
             InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(path);
             if (Objects.isNull(resourceAsStream)) {
                 throw new FileManagerException(
-                        String.format("Can't open resource stream. Maybe [%s] doesn't exist.", path));
+                    String.format("Can't open resource stream. Maybe [%s] doesn't exist.", path));
             }
             return resourceAsStream;
         }
         throw new FileManagerException(
-                String.format("Unsupported path format: [%s]. Use \"classpath:dir/example.yml\"", path));
+            String.format("Unsupported path format: [%s]. Use \"classpath:dir/example.yml\"", path));
     }
 
     @Override
     public String readFileAsString(String path) {
-        try(InputStream inputStream = readFile(path)) {
+        try (InputStream inputStream = readFile(path)) {
             return new String(inputStream.readAllBytes());
         } catch (IOException e) {
             throw new FileManagerException(String.format("Exception while reading a file by path [%s]", path), e);
-        }
-    }
-
-    @Override
-    public List<String> list() {
-        try {
-            Enumeration<URL> resources = getClass().getClassLoader().getResources("");
-            return Collections.list(resources).stream().map(URL::getPath).toList();
-        } catch (IOException e) {
-            throw new FileManagerException(e);
         }
     }
 
@@ -66,6 +57,6 @@ public class ResourceFileManager implements FileManager {
             return resourceAsStream != null;
         }
         throw new FileManagerException(
-                String.format("Unsupported path format: [%s]. Use \"classpath:dir/example.yml\"", path));
+            String.format("Unsupported path format: [%s]. Use \"classpath:dir/example.yml\"", path));
     }
 }
