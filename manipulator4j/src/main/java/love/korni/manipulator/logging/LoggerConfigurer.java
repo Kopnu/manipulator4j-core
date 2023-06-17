@@ -67,12 +67,12 @@ public class LoggerConfigurer {
     private List<AppenderComponentBuilder> buildAppenders(ConfigurationBuilder<BuiltConfiguration> builder,
                                                           LoggingConfig loggingConfig) {
         List<AppenderComponentBuilder> appenders = loggingConfig.getAppenderConfigs().stream()
-                .map(appenderConfig -> {
-                    String name = appenderConfig.getName();
-                    String type = appenderConfig.getType();
-                    return appenderGetter.getAppender(builder, name, type);
-                })
-                .toList();
+            .map(appenderConfig -> {
+                String name = appenderConfig.getName();
+                String type = appenderConfig.getType();
+                return appenderGetter.getAppender(builder, name, type);
+            })
+            .toList();
         return appenders;
     }
 
@@ -86,7 +86,7 @@ public class LoggerConfigurer {
                         rootLoggerComponent = builder.newRootLogger(Level.ALL);
                     }
                     rootLoggerComponent.add(builder.newAppenderRef(config.getName())
-                            .addAttribute("level", entry.getValue()));
+                        .addAttribute("level", entry.getValue()));
                 }
             }
         }
@@ -100,10 +100,10 @@ public class LoggerConfigurer {
             appenderConfig.getPackages().forEach((packageName, level) -> {
                 if (!packageName.equalsIgnoreCase("root")) {
                     LoggerComponentBuilder defaultValue = builder.newLogger(packageName)
-                            .addAttribute("additivity", "false");
+                        .addAttribute("additivity", "false");
                     LoggerComponentBuilder logger = loggers.getOrDefault(packageName, defaultValue);
                     logger.add(builder.newAppenderRef(appenderConfig.getName())
-                            .addAttribute("level", level));
+                        .addAttribute("level", level));
                     loggers.put(packageName, logger);
                 }
             });
@@ -115,9 +115,9 @@ public class LoggerConfigurer {
         try {
             List<LoggingConfig.AppenderConfig> appenders = new ArrayList<>();
             LoggingConfig.AppenderConfig consoleAppender = new LoggingConfig.AppenderConfig()
-                    .setName(getNodeValue(() -> logging.get("name").asText("SysOut"), "SysOut"))
-                    .setType(getNodeValue(() -> logging.get("type").asText("CONSOLE").toUpperCase(), "CONSOLE"))
-                    .setPackages(getLevels(logging.get("level")));
+                .setName(getNodeValue(() -> logging.get("name").asText("SysOut"), "SysOut"))
+                .setType(getNodeValue(() -> logging.get("type").asText("CONSOLE").toUpperCase(), "CONSOLE"))
+                .setPackages(getLevels(logging.get("level")));
             appenders.add(consoleAppender);
             JsonNode additionalAppendersNode = logging.get("additional");
             for (Iterator<JsonNode> it = additionalAppendersNode.elements(); it.hasNext(); ) {
@@ -127,9 +127,9 @@ public class LoggerConfigurer {
                     throw new LoggerConfigurationException("Console appender is not configured in \"additional\" block");
                 }
                 LoggingConfig.AppenderConfig additionalAppenderConfig = new LoggingConfig.AppenderConfig()
-                        .setName(getNodeValue(() -> jsonNode.get("name").asText(), "Appender" + appenders.size()))
-                        .setType(type)
-                        .setPackages(getLevels(jsonNode.get("level")));
+                    .setName(getNodeValue(() -> jsonNode.get("name").asText(), "Appender" + appenders.size()))
+                    .setType(type)
+                    .setPackages(getLevels(jsonNode.get("level")));
                 appenders.add(additionalAppenderConfig);
             }
 

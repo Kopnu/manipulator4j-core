@@ -42,12 +42,12 @@
 logging:
   level:
     ROOT: INFO
-  additional:
-    - name: Latest
-      type: file
-      level:
-        ROOT: OFF
-    - name: Debug
-      type: file
-      level:
-        ROOT: OFF
+#  additional:
+#    - name: Latest
+#      type: file
+#      level:
+#        ROOT: 'OFF'
+#    - name: Debug
+#      type: file
+#      level:
+#        ROOT: 'OFF'
