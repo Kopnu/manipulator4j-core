@@ -46,8 +46,8 @@ logging:
     - name: Latest
       type: file
       level:
-        ROOT: INFO
+        ROOT: OFF
     - name: Debug
       type: file
       level:
-        ROOT: INFO
+        ROOT: OFF

@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -250,14 +251,12 @@ public class GearFactory {
     private GearMetadata filterByProfilesActive(GearMetadata gearMetadata) {
         if (gearMetadata != null) {
             ArgsGear argsGear = (ArgsGear) singletonByNameGears.get("argsgear");
-            List<String> propertyProfiles = argsGear.getOptionValues("profiles");
+            List<String> activeProfiles = new ArrayList<>(List.of("default"));
+            List<String> profiles = Optional.ofNullable(argsGear.getOptionValues("profiles")).orElse(Collections.emptyList());
+            activeProfiles.addAll(profiles);
 
-            if (CollectionUtils.isEmpty(propertyProfiles)) {
-                propertyProfiles = List.of("default");
-            }
-
-            List<String> profiles = List.of(gearMetadata.getProfiles());
-            if (CollectionUtils.containsAny(profiles, propertyProfiles)) {
+            List<String> gearProfiles = List.of(gearMetadata.getProfiles());
+            if (CollectionUtils.containsAny(gearProfiles, activeProfiles)) {
                 return gearMetadata;
             }
         }

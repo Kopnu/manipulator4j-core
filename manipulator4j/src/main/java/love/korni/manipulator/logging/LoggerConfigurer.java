@@ -5,9 +5,6 @@
 
 package love.korni.manipulator.logging;
 
-import love.korni.manipulator.core.annotation.Autoinject;
-import love.korni.manipulator.core.gear.file.FileManager;
-import love.korni.manipulator.core.gear.file.ResourceFileManager;
 import love.korni.manipulator.logging.appender.AppenderGetter;
 import love.korni.manipulator.logging.appender.ConsoleAppenderGetter;
 import love.korni.manipulator.logging.appender.FileAppenderGetter;
@@ -15,9 +12,6 @@ import love.korni.manipulator.logging.appender.QueueAppenderGetter;
 import love.korni.manipulator.logging.exception.LoggerConfigurationException;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
@@ -31,8 +25,6 @@ import org.apache.logging.log4j.core.config.builder.api.LoggerComponentBuilder;
 import org.apache.logging.log4j.core.config.builder.api.RootLoggerComponentBuilder;
 import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -48,27 +40,14 @@ import java.util.function.Supplier;
 @Slf4j
 public class LoggerConfigurer {
 
-    private final FileManager fileManager;
-
-    private final ObjectMapper objectMapper;
     private final AppenderGetter appenderGetter;
 
-    @Autoinject
-    public LoggerConfigurer(FileManager fileManager) {
-        this(fileManager, new ObjectMapper(new YAMLFactory()));
-    }
-
-    public LoggerConfigurer(FileManager fileManager, ObjectMapper objectMapper) {
-        this.fileManager = fileManager;
-        this.objectMapper = objectMapper;
-        this.objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-        this.objectMapper.findAndRegisterModules();
-
+    public LoggerConfigurer() {
         appenderGetter = new ConsoleAppenderGetter(new QueueAppenderGetter(new FileAppenderGetter(null)));
     }
 
-    public void configure(String pathToConfigFile) {
-        LoggingConfig loggingConfig = getConfig(pathToConfigFile);
+    public void configure(JsonNode logging) {
+        LoggingConfig loggingConfig = getConfig(logging);
 
         if (loggingConfig == null) {
             return;
@@ -132,10 +111,8 @@ public class LoggerConfigurer {
         return loggers;
     }
 
-    private LoggingConfig getConfig(String pathToConfigFile) {
+    private LoggingConfig getConfig(JsonNode logging) {
         try {
-            JsonNode logging = readConfigFile(pathToConfigFile).get("logging");
-
             List<LoggingConfig.AppenderConfig> appenders = new ArrayList<>();
             LoggingConfig.AppenderConfig consoleAppender = new LoggingConfig.AppenderConfig()
                     .setName(getNodeValue(() -> logging.get("name").asText("SysOut"), "SysOut"))
@@ -178,15 +155,6 @@ public class LoggerConfigurer {
             packages.put(entry.getKey(), entry.getValue().asText().toUpperCase());
         }
         return packages;
-    }
-
-    private JsonNode readConfigFile(String path) {
-        try {
-            InputStream inputStream = fileManager.readFile(ResourceFileManager.CLASSPATH + path);
-            return objectMapper.readTree(inputStream);
-        } catch (IOException e) {
-            throw new LoggerConfigurationException(e);
-        }
     }
 
     @Data

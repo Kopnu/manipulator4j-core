@@ -7,6 +7,7 @@ package love.korni.manipulator.core.caldron.metadata;
 
 import static love.korni.manipulator.core.caldron.GearFactoryUtils.getGearAnnotationValue;
 
+import love.korni.manipulator.core.annotation.AfterConstruct;
 import love.korni.manipulator.core.annotation.Autoinject;
 import love.korni.manipulator.core.annotation.Gear;
 import love.korni.manipulator.core.caldron.GearFactory;
@@ -21,6 +22,7 @@ import lombok.Getter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;
@@ -36,6 +38,7 @@ public class ClassGearMetadata extends AbstractGearMetadata {
 
     @Getter
     protected final List<Class<?>> interfaces;
+    protected final Method afterConstructMethod;
 
     public ClassGearMetadata(Class<?> clazz) {
         this(clazz, getGearAnnotationValue(clazz.getAnnotation(Gear.class), ""), null);
@@ -45,6 +48,7 @@ public class ClassGearMetadata extends AbstractGearMetadata {
         super(clazz.getCanonicalName(), name, clazz);
         this.parent = parent;
         this.interfaces = ReflectionUtils.getInterfaces(clazz);
+        this.afterConstructMethod = findAfterConstructMethod(clazz);
     }
 
     @Override
@@ -92,6 +96,9 @@ public class ClassGearMetadata extends AbstractGearMetadata {
                             throw new GearConstructionException("Error while construction a gear " + gear.getClass(), e);
                         }
                     }
+                    if (afterConstructMethod != null) {
+                        afterConstructMethod.invoke(gear);
+                    }
                 } catch (IllegalAccessException | InvocationTargetException | InstantiationException e) {
                     throw new GearConstructionException(e);
                 }
@@ -106,8 +113,8 @@ public class ClassGearMetadata extends AbstractGearMetadata {
                     if (declaredConstructors.length == 1) {
                         Constructor<?> constructor = declaredConstructors[0];
                         Object[] args = Arrays.stream(constructor.getGenericParameterTypes())
-                            .map(gearFactory::getGear)
-                            .toArray();
+                                .map(gearFactory::getGear)
+                                .toArray();
                         return constructor.newInstance(args);
                     }
                     throw e;
@@ -122,5 +129,16 @@ public class ClassGearMetadata extends AbstractGearMetadata {
             }
 
         });
+    }
+
+    private Method findAfterConstructMethod(Class<?> clazz) {
+        List<Method> methodsAnnotated = ReflectionUtils.findMethodsAnnotated(clazz, AfterConstruct.class);
+        if (methodsAnnotated.isEmpty()) {
+            return null;
+        }
+        if (methodsAnnotated.size() > 1) {
+            throw new GearConstructionException("Found %d \"@AfterConstruct\" methods. Expected one.".formatted(methodsAnnotated.size()));
+        }
+        return methodsAnnotated.get(0);
     }
 }

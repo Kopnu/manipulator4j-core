@@ -61,14 +61,26 @@ public class ReflectionUtils {
             .toList();
     }
 
+    public List<Constructor<?>> findConstructorsAnnotated(Class<?> clazz, Class<? extends Annotation> annotation) {
+        return Arrays.stream(clazz.getDeclaredConstructors())
+                .filter(method -> method.isAnnotationPresent(annotation))
+                .toList();
+    }
+
     public List<Annotation> getTypeAnnotations(Class<?> clazz) {
         return Arrays.stream(clazz.getDeclaredAnnotations()).toList();
     }
 
-    public List<Constructor<?>> findConstructorsAnnotated(Class<?> clazz, Class<? extends Annotation> annotation) {
-        return Arrays.stream(clazz.getDeclaredConstructors())
-            .filter(method -> method.isAnnotationPresent(annotation))
-            .toList();
+    public List<Field> getFields(Class<?> clazz) {
+        return Arrays.stream(clazz.getDeclaredFields()).toList();
+    }
+
+    public List<Method> getMethods(Class<?> clazz) {
+        return Arrays.stream(clazz.getDeclaredMethods()).toList();
+    }
+
+    public List<Constructor<?>> getConstructors(Class<?> clazz) {
+        return Arrays.stream(clazz.getDeclaredConstructors()).toList();
     }
 
     public List<Class<?>> getInterfaces(Class<?> clazz) {

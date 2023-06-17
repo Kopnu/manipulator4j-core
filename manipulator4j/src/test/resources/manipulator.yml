@@ -1,0 +1,13 @@
+path:
+  to:
+    something: INFO
+
+logging:
+  level:
+    ROOT: DEBUG
+
+profile-local:
+  local: LOCAL
+
+profile-dev:
+  dev: DEV

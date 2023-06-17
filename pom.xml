@@ -11,6 +11,7 @@
 
     <modules>
         <module>manipulator4j</module>
+        <module>manipulator4j-test</module>
     </modules>
 
     <name>Manipulator4J</name>
