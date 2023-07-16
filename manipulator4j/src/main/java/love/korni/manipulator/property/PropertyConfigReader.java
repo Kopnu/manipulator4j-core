@@ -1,7 +1,7 @@
 package love.korni.manipulator.property;
 
 import love.korni.manipulator.core.gear.file.FileManager;
-import love.korni.manipulator.core.gear.file.ResourceFileManager;
+import love.korni.manipulator.core.gear.file.reader.ClasspathReader;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,8 +21,8 @@ import java.util.Map;
  */
 class PropertyConfigReader {
 
-    private final static String BASE_MANIPULATOR = ResourceFileManager.CLASSPATH + "base-manipulator.yml";
-    private final static String MANIPULATOR = ResourceFileManager.CLASSPATH + "manipulator.yml";
+    private final static String BASE_MANIPULATOR = ClasspathReader.CLASSPATH + "base-manipulator.yml";
+    private final static String MANIPULATOR = ClasspathReader.CLASSPATH + "manipulator.yml";
 
     private static final String PROFILE_KEY = "profile-";
 

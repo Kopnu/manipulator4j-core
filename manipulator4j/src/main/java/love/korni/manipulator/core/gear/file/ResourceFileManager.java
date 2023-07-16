@@ -6,6 +6,9 @@
 package love.korni.manipulator.core.gear.file;
 
 import love.korni.manipulator.core.gear.file.exception.FileManagerException;
+import love.korni.manipulator.core.gear.file.reader.ClasspathReader;
+import love.korni.manipulator.core.gear.file.reader.FileReader;
+import love.korni.manipulator.core.gear.file.reader.FilesystemReader;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,18 +26,19 @@ import java.util.Set;
  */
 public class ResourceFileManager implements FileManager {
 
-    public static final String CLASSPATH = "classpath:";
+    private final List<FileReader> fileReaders = List.of(new ClasspathReader(), new FilesystemReader());
 
     @Override
     public InputStream readFile(String path) throws FileManagerException {
-        if (path.startsWith(CLASSPATH)) {
-            path = path.replace(CLASSPATH, "");
-            InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(path);
-            if (Objects.isNull(resourceAsStream)) {
-                throw new FileManagerException(
-                    String.format("Can't open resource stream. Maybe [%s] doesn't exist.", path));
+        try {
+            for (FileReader reader : fileReaders) {
+                if (reader.canRead(path)) {
+                    return reader.read(path);
+                }
             }
-            return resourceAsStream;
+        } catch (IOException e) {
+            throw new FileManagerException(
+                    String.format("Unsupported path format: [%s]. Use \"classpath:dir/example.yml\"", path), e);
         }
         throw new FileManagerException(
             String.format("Unsupported path format: [%s]. Use \"classpath:dir/example.yml\"", path));
@@ -51,12 +55,6 @@ public class ResourceFileManager implements FileManager {
 
     @Override
     public boolean fileExists(String path) {
-        if (path.startsWith(CLASSPATH)) {
-            path = path.replace(CLASSPATH, "");
-            InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(path);
-            return resourceAsStream != null;
-        }
-        throw new FileManagerException(
-            String.format("Unsupported path format: [%s]. Use \"classpath:dir/example.yml\"", path));
+        return readFile(path) != null;
     }
 }

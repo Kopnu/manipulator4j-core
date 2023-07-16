@@ -19,10 +19,11 @@ import love.korni.manipulator.core.gear.args.ArgsGear;
 import love.korni.manipulator.core.gear.args.DefaultArgsGear;
 import love.korni.manipulator.core.gear.file.FileManager;
 import love.korni.manipulator.core.gear.file.ResourceFileManager;
+import love.korni.manipulator.core.gear.file.reader.ClasspathReader;
 import love.korni.manipulator.core.runner.Runner;
 import love.korni.manipulator.logging.LoggerConfigurer;
-import love.korni.manipulator.property.DefaultConfigManager;
 import love.korni.manipulator.property.ConfigManager;
+import love.korni.manipulator.property.DefaultConfigManager;
 import love.korni.manipulator.util.ConstructionUtils;
 
 import lombok.extern.slf4j.Slf4j;
@@ -119,7 +120,7 @@ public class Manipulator {
         LoggerConfigurer loggerConfigurer = new LoggerConfigurer();
         loggerConfigurer.configure(configManager.getConfig("logging"));
 
-        String banner = fileManager.readFileAsString(ResourceFileManager.CLASSPATH + "banner.txt");
+        String banner = fileManager.readFileAsString(ClasspathReader.CLASSPATH + "banner.txt");
         log.info(banner);
 
         ApplicationCaldron applicationCaldron = new ApplicationCaldron(gearFactory);
