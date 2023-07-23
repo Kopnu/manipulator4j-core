@@ -2,6 +2,7 @@
 # Manipulator4J
 
 A simple DI container inspired by the Spring Framework. This is a light parody of the real functionality 🙂
+Required if you want to use IoC like in Spring, but it's an overhead for you.
 
 ## Usage
 
