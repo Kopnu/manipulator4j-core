@@ -19,6 +19,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertThrows;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -163,6 +164,19 @@ public class AutoinjectTest {
         assertNull(configManager.getAsText("dev"));
     }
 
+    @Test(priority = 14)
+    public void testAbstractGearClass() {
+        Caldron caldron = Manipulator.run(AutoinjectTest.class);
+        assertThrows(NoSuchGearMetadataException.class, () -> caldron.getGearOfType(AbstractGearClass.class));
+    }
+
+    @Test(priority = 15)
+    public void testPrimary() {
+        Caldron caldron = Manipulator.run(AutoinjectTest.class);
+        ForPrimary gear = caldron.getGearOfType(ForPrimary.class);
+        Assert.assertNotNull(gear);
+    }
+
     @Gear
     public static class EmptyClass {
     }
@@ -263,5 +277,20 @@ public class AutoinjectTest {
         private final EmptyClass emptyClass;
 
     }
+
+    @Gear
+    public static abstract class AbstractGearClass {
+        @Autoinject
+        private EmptyClass emptyClass;
+    }
+
+    /* 15 */
+    public interface ForPrimary {}
+
+    @Gear
+    public static class NotPrimary implements ForPrimary { }
+
+    @Gear(isPrimary = true)
+    public static class Primary implements ForPrimary { }
 
 }

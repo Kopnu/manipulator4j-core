@@ -21,6 +21,8 @@ public sealed interface GearMetadata permits AbstractGearMetadata {
 
     GearScope getScope();
 
+    boolean isPrimary();
+
     String[] getProfiles();
 
     GearMetadata getParent();

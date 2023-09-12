@@ -55,6 +55,10 @@ public class ResourceFileManager implements FileManager {
 
     @Override
     public boolean fileExists(String path) {
-        return readFile(path) != null;
+        try {
+            return readFile(path) != null;
+        } catch (FileManagerException e) {
+            return false;
+        }
     }
 }

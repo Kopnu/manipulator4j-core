@@ -27,6 +27,8 @@ public @interface Gear {
 
     GearScope scope() default GearScope.SINGLETON;
 
+    boolean isPrimary() default false;
+
     String[] profiles() default "default";
 
 }

@@ -72,7 +72,6 @@ public class ClassGearMetadata extends AbstractGearMetadata {
                     List<Field> fieldsAnnotated = getFieldsAnnotated();
                     for (Field field : fieldsAnnotated) {
                         try {
-                            String injectGear = field.getAnnotation(Autoinject.class).value();
                             ReflectionUtils.makeAccessible(field);
                             Class<?> fieldType = field.getType();
                             Object value;
@@ -81,6 +80,8 @@ public class ClassGearMetadata extends AbstractGearMetadata {
                                 Type typeArgument = genericType.getActualTypeArguments()[0];
                                 value = getGears(typeArgument);
                             } else {
+                                Autoinject annotation = field.getAnnotation(Autoinject.class);
+                                String injectGear = annotation.value();
                                 String name = injectGear.isBlank() ? field.getName() : injectGear;
                                 value = getGear(name, fieldType);
                             }

@@ -39,6 +39,10 @@ public class ReflectionUtils {
         }
     }
 
+    public boolean isAbstract(Class<?> clazz) {
+        return Modifier.isAbstract(clazz.getModifiers());
+    }
+
     public List<Field> findFieldsAnnotated(Class<?> clazz, Class<? extends Annotation> annotation) {
         return getDeclaredFieldsWithParents(clazz).stream()
             .filter(method -> method.isAnnotationPresent(annotation))
