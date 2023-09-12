@@ -184,11 +184,21 @@ public class GearFactory {
 
             if (gearMetadataResolve.size() > 1) {
                 if (!isManyResults) {
-                    StringBuilder sb = new StringBuilder();
-                    gearMetadataResolve.forEach(gmr -> sb.append(gmr.getGearName()).append("(").append(gmr.getGearClass()).append(")"));
-                    throw new NoSuchGearMetadataException("So much candidates [%s] for autoinjected gear [%s]. Specify gear name.".formatted(sb, clazz));
+                    List<GearMetadata> primaryMetadataList = gearMetadataResolve.stream().filter(GearMetadata::isPrimary).toList();
+                    if (primaryMetadataList.isEmpty()) {
+                        StringBuilder sb = new StringBuilder("\n");
+                        gearMetadataResolve.forEach(gmr -> sb.append("\t-\t").append(gmr.getGearName()).append(" (").append(gmr.getGearClass()).append(")").append("\n"));
+                        throw new NoSuchGearMetadataException("So much candidates for autoinjected gear [%s] by name: '%s'.\nTips:\n\t-\tTry to specify gear name.\n\t-\tTry to setup primary = true.\n%s".formatted(clazz, name, sb));
+                    } else if (primaryMetadataList.size() != 1) {
+                        StringBuilder sb = new StringBuilder("\n");
+                        primaryMetadataList.forEach(gmr -> sb.append("\t-\t").append(gmr.getGearName()).append(" (").append(gmr.getGearClass()).append(")").append("\n"));
+                        throw new NoSuchGearMetadataException("So much 'Primary' candidates for autoinjected gear [%s] by name: '%s'.\nTips:\n\t-\tLeave only one Gear with primary = true.\n%s".formatted(clazz, name, sb));
+                    } else {
+                        gearMetadata = primaryMetadataList.get(0);
+                    }
+                } else {
+                    gearMetadata = new ArrayGearMetadata(clazz, gearMetadataResolve);
                 }
-                gearMetadata = new ArrayGearMetadata(clazz, gearMetadataResolve);
             } else if (gearMetadataResolve.size() == 1) {
                 if (isManyResults) {
                     gearMetadata = new ArrayGearMetadata(clazz, gearMetadataResolve);
@@ -231,11 +241,12 @@ public class GearFactory {
 
     private Object constructGear(GearMetadata gearMetadata, Object[] args) {
         synchronized (singletonsCurrentlyInCreation) {
-            if (singletonsCurrentlyInCreation.contains(gearMetadata.getGearName())) {
-                throw new GearConstructionException("Gear [%s] currently in construction. Circular reference? [%s]"
-                        .formatted(gearMetadata.getGearName(), GearFactoryUtils.resolveCircularRef(singletonsCurrentlyInCreation, gearMetadata.getGearName())));
+            String gearInCreation = gearMetadata.getGearClass() + " " + gearMetadata.getGearName();
+            if (singletonsCurrentlyInCreation.contains(gearInCreation)) {
+                throw new GearConstructionException("Gear with type [%s] and name [%s] currently in construction.\n\tCircular reference?\n%s"
+                        .formatted(gearMetadata.getGearClass(), gearMetadata.getGearName(), GearFactoryUtils.resolveCircularRef(singletonsCurrentlyInCreation, gearInCreation)));
             }
-            singletonsCurrentlyInCreation.add(gearMetadata.getGearName());
+            singletonsCurrentlyInCreation.add(gearInCreation);
 
             GearMetadataFactory factory = gearMetadata.getFactory(this);
             Object gear = factory.construct(args);
@@ -243,7 +254,7 @@ public class GearFactory {
             if (gear == null) {
                 throw new GearConstructionException("Can not construct a gear with type [" + gearMetadata.getGearClass() + "]");
             }
-            singletonsCurrentlyInCreation.remove(gearMetadata.getGearName());
+            singletonsCurrentlyInCreation.remove(gearInCreation);
             return gear;
         }
     }

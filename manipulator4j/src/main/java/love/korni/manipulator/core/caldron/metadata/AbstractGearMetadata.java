@@ -36,6 +36,7 @@ public abstract non-sealed class AbstractGearMetadata implements GearMetadata {
     protected final String name;
     protected final GearScope scope;
     protected final String[] profiles;
+    protected final boolean primary;
 
     protected GearMetadata parent;
     protected List<Annotation> typeAnnotations;
@@ -61,6 +62,7 @@ public abstract non-sealed class AbstractGearMetadata implements GearMetadata {
         Optional<Gear> gearAnnotation = getTypeAnnotation(Gear.class);
         this.scope = gearAnnotation.map(Gear::scope).orElse(GearScope.SINGLETON);
         this.profiles = gearAnnotation.map(Gear::profiles).orElse(new String[]{"default"});
+        this.primary = gearAnnotation.map(Gear::isPrimary).orElse(Boolean.FALSE);
     }
 
     private void analyzeGear() {

@@ -25,6 +25,7 @@ import love.korni.manipulator.logging.LoggerConfigurer;
 import love.korni.manipulator.property.ConfigManager;
 import love.korni.manipulator.property.DefaultConfigManager;
 import love.korni.manipulator.util.ConstructionUtils;
+import love.korni.manipulator.util.ReflectionUtils;
 
 import lombok.extern.slf4j.Slf4j;
 import org.reflections.Reflections;
@@ -76,8 +77,13 @@ public class Manipulator {
 
         log.debug("Class tree analysis");
         Set<GearMetadata> gearMetadataSet = new HashSet<>();
-        gearMetadataSet.addAll(reflections.getMethodsAnnotatedWith(Gear.class).parallelStream().map(MethodGearMetadata::new).collect(Collectors.toSet()));
-        gearMetadataSet.addAll(reflections.getTypesAnnotatedWith(Gear.class).parallelStream().map(ClassGearMetadata::new).collect(Collectors.toSet()));
+        gearMetadataSet.addAll(reflections.getMethodsAnnotatedWith(Gear.class).parallelStream()
+                .map(MethodGearMetadata::new)
+                .collect(Collectors.toSet()));
+        gearMetadataSet.addAll(reflections.getTypesAnnotatedWith(Gear.class).parallelStream()
+                .filter(clazz -> !ReflectionUtils.isAbstract(clazz))
+                .map(ClassGearMetadata::new)
+                .collect(Collectors.toSet()));
 
         log.debug("Checking a correctness of the use of annotations");
         checkAnnotationsUsage();
