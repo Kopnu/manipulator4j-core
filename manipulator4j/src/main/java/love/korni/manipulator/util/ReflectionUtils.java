@@ -6,13 +6,17 @@
 package love.korni.manipulator.util;
 
 import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.reflect.TypeUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -97,5 +101,13 @@ public class ReflectionUtils {
             classes[i] = objects[i].getClass();
         }
         return classes;
+    }
+
+    public static boolean isCollectionType(Type type) {
+        if (type instanceof ParameterizedType parameterizedType) {
+            Type rawType = parameterizedType.getRawType();
+            return rawType != null && TypeUtils.isAssignable(rawType, Collection.class);
+        }
+        return false;
     }
 }

@@ -7,7 +7,6 @@ package love.korni.manipulator.core.caldron.metadata;
 
 import love.korni.manipulator.core.annotation.Autoinject;
 import love.korni.manipulator.core.annotation.Gear;
-import love.korni.manipulator.core.caldron.GearMetadataFactory;
 import love.korni.manipulator.util.ReflectionUtils;
 
 import lombok.Getter;
@@ -19,7 +18,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 /**
  * Абстрактный класс метаинформации для шестерни реализующий интерфейс {@link GearMetadata}.
@@ -43,8 +41,6 @@ public abstract non-sealed class AbstractGearMetadata implements GearMetadata {
     protected List<Field> fieldsAnnotated;
     protected List<Method> methodsAnnotated;
     protected List<Constructor<?>> constructorsAnnotated;
-
-    protected GearMetadataFactory factory;
 
     public AbstractGearMetadata(Class<?> gearClass) {
         this(gearClass.getCanonicalName(), gearClass.getSimpleName(), gearClass);
@@ -84,10 +80,6 @@ public abstract non-sealed class AbstractGearMetadata implements GearMetadata {
         return name.toLowerCase();
     }
 
-    protected GearMetadataFactory getFactory(Supplier<GearMetadataFactory> supplier) {
-        return factory != null ? factory : supplier.get();
-    }
-
     @SuppressWarnings("unchecked")
     protected <T> Optional<T> getTypeAnnotation(Class<T> annotationClass) {
         return typeAnnotations.stream()
@@ -99,12 +91,12 @@ public abstract non-sealed class AbstractGearMetadata implements GearMetadata {
     @Override
     public String toString() {
         return "AbstractGearMetadata{" +
-                "gearName='" + getGearName() + '\'' +
-                ", canonicalName='" + canonicalName + '\'' +
-                ", name='" + name + '\'' +
-                ", type=" + scope +
-                ", gearClass=" + gearClass +
-                ", parent=" + parent +
-                '}';
+               "gearName='" + getGearName() + '\'' +
+               ", canonicalName='" + canonicalName + '\'' +
+               ", name='" + name + '\'' +
+               ", type=" + scope +
+               ", gearClass=" + gearClass +
+               ", parent=" + parent +
+               '}';
     }
 }

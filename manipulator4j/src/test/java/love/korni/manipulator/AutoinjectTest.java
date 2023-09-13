@@ -177,6 +177,13 @@ public class AutoinjectTest {
         Assert.assertNotNull(gear);
     }
 
+    @Test(priority = 16)
+    public void testPostContruct() {
+        Caldron caldron = Manipulator.run(AutoinjectTest.class);
+        ForPostConstruct gear = caldron.getGearOfType(ForPostConstruct.class);
+        Assert.assertNotNull(gear);
+    }
+
     @Gear
     public static class EmptyClass {
     }
@@ -292,5 +299,26 @@ public class AutoinjectTest {
 
     @Gear(isPrimary = true)
     public static class Primary implements ForPrimary { }
+
+    /* 16 */
+    public interface ForPostConstruct { }
+
+    @Gear
+    public static abstract class ForPostConstructAbstr implements ForPostConstruct {
+
+        @Autoinject
+        private ForPostConstruct forPostConstruct;
+
+    }
+
+    @Gear(isPrimary = true)
+    public static class ForPostConstructImpl extends ForPostConstructAbstr {
+        @Autoinject("ForPostConstructImpl_")
+        private ForPostConstruct forPostConstruct;
+    }
+
+    @Gear("ForPostConstructImpl_")
+    public static class ForPostConstructImpl_ implements ForPostConstruct {
+    }
 
 }
