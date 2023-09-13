@@ -303,7 +303,6 @@ public class AutoinjectTest {
     /* 16 */
     public interface ForPostConstruct { }
 
-    @Gear
     public static abstract class ForPostConstructAbstr implements ForPostConstruct {
 
         @Autoinject
