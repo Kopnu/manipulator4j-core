@@ -8,10 +8,16 @@ package love.korni.manipulator.core.caldron;
 import love.korni.manipulator.core.caldron.metadata.ArrayGearMetadata;
 import love.korni.manipulator.core.caldron.metadata.ClassGearMetadata;
 import love.korni.manipulator.core.caldron.metadata.GearMetadata;
+import love.korni.manipulator.core.caldron.metadata.MethodGearMetadata;
+import love.korni.manipulator.core.caldron.metadata.factory.ArrayGearMetadataFactory;
+import love.korni.manipulator.core.caldron.metadata.factory.ClassGearMetadataFactory;
+import love.korni.manipulator.core.caldron.metadata.factory.GearMetadataFactory;
+import love.korni.manipulator.core.caldron.metadata.factory.MethodGearMetadataFactory;
 import love.korni.manipulator.core.exception.GearConstructionException;
 import love.korni.manipulator.core.exception.NoSuchGearMetadataException;
 import love.korni.manipulator.core.gear.args.ArgsGear;
 import love.korni.manipulator.util.Assert;
+import love.korni.manipulator.util.ReflectionUtils;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +51,15 @@ public class GearFactory {
     private final Map<String, GearMetadata> gearMetadataByNameMap = new ConcurrentHashMap<>(64);
     private final Map<Class<?>, GearMetadata> gearMetadataByClassMap = new ConcurrentHashMap<>(64);
 
+    private final List<String> singletonsCurrentlyInPreCreation = Collections.synchronizedList(new LinkedList<>());
     private final List<String> singletonsCurrentlyInCreation = Collections.synchronizedList(new LinkedList<>());
+    private final List<String> singletonsCurrentlyInPostCreation = Collections.synchronizedList(new LinkedList<>());
+
+    private final Map<Class<? extends GearMetadata>, GearMetadataFactory<? extends GearMetadata>> gearMetadataFactories = new ConcurrentHashMap<>(Map.of(
+            ClassGearMetadata.class, new ClassGearMetadataFactory(this),
+            MethodGearMetadata.class, new MethodGearMetadataFactory(this),
+            ArrayGearMetadata.class, new ArrayGearMetadataFactory(this)
+    ));
 
     public GearFactory() {
         this(Collections.emptySet());
@@ -69,17 +83,17 @@ public class GearFactory {
         if (gearMetadata == null) {
             throw new NoSuchGearMetadataException("Unknown gear with type [%s]".formatted(type));
         }
-        return getGear(gearMetadata, null);
+        return getGearOrConstruct(gearMetadata, null);
     }
 
     @SneakyThrows
     public <T> T getGear(Type type) {
         String typeName = type.getTypeName();
         if (type instanceof ParameterizedType parameterizedType) {
-            if (GearFactoryUtils.isCollectionType(type)) {
+            if (ReflectionUtils.isCollectionType(type)) {
                 Type[] actualTypes = parameterizedType.getActualTypeArguments();
                 Type actualType = actualTypes[0];
-                return (T) getGears(actualType);
+                return (T) getGearsOrConstruct(actualType);
             }
         }
         Class<T> loadClass = (Class<T>) Thread.currentThread().getContextClassLoader().loadClass(typeName);
@@ -91,7 +105,7 @@ public class GearFactory {
         if (gearMetadata == null) {
             throw new NoSuchGearMetadataException("Unknown gear with type [%s]".formatted(type));
         }
-        return getGear(gearMetadata, args);
+        return getGearOrConstruct(gearMetadata, args);
     }
 
     public <T> T getGear(String gearName, Class<T> type) {
@@ -99,7 +113,7 @@ public class GearFactory {
         if (gearMetadata == null) {
             throw new NoSuchGearMetadataException("Unknown gear with name [%s] and type [%s]".formatted(gearName, type));
         }
-        return getGear(gearMetadata, null);
+        return getGearOrConstruct(gearMetadata, null);
     }
 
     protected <T> T getGear(String gearName, Type type) throws ClassNotFoundException {
@@ -108,10 +122,10 @@ public class GearFactory {
         if (gearMetadata == null) {
             throw new NoSuchGearMetadataException("Unknown gear with name [%s] and type [%s]".formatted(gearName, type));
         }
-        return getGear(gearMetadata, null);
+        return getGearOrConstruct(gearMetadata, null);
     }
 
-    protected <T> T getGear(GearMetadata gearMetadata, Object[] args) {
+    protected <T> T getGearOrConstruct(GearMetadata gearMetadata, Object[] args) {
         Object newGear = switch (gearMetadata.getScope()) {
             case SINGLETON -> {
                 Object gear = singletonByNameGears.get(gearMetadata.getGearName());
@@ -122,26 +136,30 @@ public class GearFactory {
                     yield gear;
                 }
 
+                preConstruct(gearMetadata);
                 gear = constructGear(gearMetadata, args);
                 registerGear(gearMetadata, gear);
                 yield gear;
             }
-            case PROTOTYPE -> constructGear(gearMetadata, args);
+            case PROTOTYPE -> {
+                preConstruct(gearMetadata);
+                yield constructGear(gearMetadata, args);
+            }
         };
 
+        postConstruct(gearMetadata, newGear);
         return (T) newGear;
     }
 
     @SneakyThrows
-    protected <T> Collection<T> getGears(Type type) {
+    protected <T> Collection<T> getGearsOrConstruct(Type type) {
         Class<T> loadClass = (Class<T>) Thread.currentThread().getContextClassLoader().loadClass(type.getTypeName());
-        return getGears(loadClass);
+        return getGearsOrConstruct(loadClass);
     }
 
-    protected <T> Collection<T> getGears(Class<T> type) {
+    protected <T> Collection<T> getGearsOrConstruct(Class<T> type) {
         GearMetadata gearMetadata = getMetadata(type, null, true);
-        GearMetadataFactory factory = gearMetadata.getFactory(this);
-        return new ArrayList<>((Collection<T>) factory.construct(null));
+        return new ArrayList<>((Collection<T>) getFactory(gearMetadata).construct(gearMetadata, null));
     }
 
     private GearMetadata createMetadata(Class<?> clazz) {
@@ -213,6 +231,21 @@ public class GearFactory {
         return gearMetadata;
     }
 
+    private GearMetadata filterByProfilesActive(GearMetadata gearMetadata) {
+        if (gearMetadata != null) {
+            ArgsGear argsGear = (ArgsGear) singletonByNameGears.get("argsgear");
+            List<String> activeProfiles = new ArrayList<>(List.of("default"));
+            List<String> profiles = Optional.ofNullable(argsGear.getOptionValues("profiles")).orElse(Collections.emptyList());
+            activeProfiles.addAll(profiles);
+
+            List<String> gearProfiles = List.of(gearMetadata.getProfiles());
+            if (CollectionUtils.containsAny(gearProfiles, activeProfiles)) {
+                return gearMetadata;
+            }
+        }
+        return null;
+    }
+
     private void addMetadata(Set<GearMetadata> metadataSet) {
         gearMetadataByNameMap.putAll(metadataSet.stream().collect(Collectors.toMap(GearMetadata::getGearName, Function.identity())));
         gearMetadataByClassMap.putAll(metadataSet.stream().collect(Collectors.toMap(GearMetadata::getGearClass, Function.identity())));
@@ -239,6 +272,18 @@ public class GearFactory {
         }
     }
 
+    private void preConstruct(GearMetadata gearMetadata) {
+        synchronized (singletonsCurrentlyInPreCreation) {
+            String gearInPreCreation = gearMetadata.getGearClass() + " " + gearMetadata.getGearName();
+            if (singletonsCurrentlyInPostCreation.contains(gearInPreCreation)) {
+                return;
+            }
+            singletonsCurrentlyInPostCreation.add(gearInPreCreation);
+            getFactory(gearMetadata).preConstruct(gearMetadata);
+            singletonsCurrentlyInPostCreation.remove(gearInPreCreation);
+        }
+    }
+
     private Object constructGear(GearMetadata gearMetadata, Object[] args) {
         synchronized (singletonsCurrentlyInCreation) {
             String gearInCreation = gearMetadata.getGearClass() + " " + gearMetadata.getGearName();
@@ -248,8 +293,7 @@ public class GearFactory {
             }
             singletonsCurrentlyInCreation.add(gearInCreation);
 
-            GearMetadataFactory factory = gearMetadata.getFactory(this);
-            Object gear = factory.construct(args);
+            Object gear = getFactory(gearMetadata).construct(gearMetadata, args);
 
             if (gear == null) {
                 throw new GearConstructionException("Can not construct a gear with type [" + gearMetadata.getGearClass() + "]");
@@ -259,19 +303,19 @@ public class GearFactory {
         }
     }
 
-    private GearMetadata filterByProfilesActive(GearMetadata gearMetadata) {
-        if (gearMetadata != null) {
-            ArgsGear argsGear = (ArgsGear) singletonByNameGears.get("argsgear");
-            List<String> activeProfiles = new ArrayList<>(List.of("default"));
-            List<String> profiles = Optional.ofNullable(argsGear.getOptionValues("profiles")).orElse(Collections.emptyList());
-            activeProfiles.addAll(profiles);
-
-            List<String> gearProfiles = List.of(gearMetadata.getProfiles());
-            if (CollectionUtils.containsAny(gearProfiles, activeProfiles)) {
-                return gearMetadata;
+    private void postConstruct(GearMetadata gearMetadata, Object object) {
+        synchronized (singletonsCurrentlyInPostCreation) {
+            String gearInPostCreation = gearMetadata.getGearClass() + " " + gearMetadata.getGearName();
+            if (singletonsCurrentlyInPostCreation.contains(gearInPostCreation)) {
+                return;
             }
+            singletonsCurrentlyInPostCreation.add(gearInPostCreation);
+            getFactory(gearMetadata).postConstruct(gearMetadata, object);
+            singletonsCurrentlyInPostCreation.remove(gearInPostCreation);
         }
-        return null;
     }
 
+    private GearMetadataFactory getFactory(GearMetadata gearMetadata) {
+        return gearMetadataFactories.get(gearMetadata.getClass());
+    }
 }
