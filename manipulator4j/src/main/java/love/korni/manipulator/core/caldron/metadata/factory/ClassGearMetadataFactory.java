@@ -1,12 +1,15 @@
 package love.korni.manipulator.core.caldron.metadata.factory;
 
 import love.korni.manipulator.core.annotation.Autoinject;
+import love.korni.manipulator.core.annotation.Specify;
 import love.korni.manipulator.core.caldron.GearFactory;
 import love.korni.manipulator.core.caldron.metadata.ClassGearMetadata;
 import love.korni.manipulator.core.exception.GearConstructionException;
 import love.korni.manipulator.core.exception.NoSuchGearMetadataException;
 import love.korni.manipulator.util.ConstructionUtils;
 import love.korni.manipulator.util.ReflectionUtils;
+
+import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -35,7 +38,7 @@ public class ClassGearMetadataFactory extends AbstractGearMetadataFactory<ClassG
     public Object construct(ClassGearMetadata gearMetadata, Object[] args) throws GearConstructionException {
         Object gear;
         try {
-            List<Constructor<?>> constructorsAnnotated = gearMetadata.getConstructorsAnnotated();
+            List<Constructor<?>> constructorsAnnotated = gearMetadata.getConstructorsAutoinject();
             int size = constructorsAnnotated.size();
             if (args != null) {
                 gear = ConstructionUtils.useConstructorWithArgs(gearMetadata.getGearClass(), args);
@@ -57,7 +60,7 @@ public class ClassGearMetadataFactory extends AbstractGearMetadataFactory<ClassG
 
     @Override
     public void postConstruct(ClassGearMetadata gearMetadata, Object gear) throws GearConstructionException {
-        List<Field> fieldsAnnotated = gearMetadata.getFieldsAnnotated();
+        List<Field> fieldsAnnotated = gearMetadata.getFieldsAutoinject();
         for (Field field : fieldsAnnotated) {
             try {
                 ReflectionUtils.makeAccessible(field);
@@ -68,9 +71,7 @@ public class ClassGearMetadataFactory extends AbstractGearMetadataFactory<ClassG
                     Type typeArgument = genericType.getActualTypeArguments()[0];
                     value = gearFactoryAdapter.getGearsOrConstruct(typeArgument);
                 } else {
-                    Autoinject annotation = field.getAnnotation(Autoinject.class);
-                    String injectGear = annotation.value();
-                    String name = injectGear.isBlank() ? field.getName() : injectGear;
+                    String name = getSpecifyGearName(field);
                     value = gearFactoryAdapter.getGear(name, fieldType);
                 }
 
@@ -104,9 +105,29 @@ public class ClassGearMetadataFactory extends AbstractGearMetadataFactory<ClassG
     }
 
     private Object useAutoinjectConstructor(ClassGearMetadata gearMetadata) throws InvocationTargetException, InstantiationException, IllegalAccessException {
-        Constructor<?> constructor = gearMetadata.getConstructorsAnnotated().get(0);
+        Constructor<?> constructor = gearMetadata.getConstructorsAutoinject().get(0);
         Class<?>[] parameterTypes = constructor.getParameterTypes();
         Object[] params = Arrays.stream(parameterTypes).map(gearFactoryAdapter::getGear).toArray();
         return constructor.newInstance(params);
     }
+
+    private String getSpecifyGearName(Field field) {
+        String injectGear = field.getName();
+
+        String value = field.getAnnotation(Autoinject.class).value();
+        if (StringUtils.isNoneBlank(value)) {
+            injectGear = value;
+        }
+
+        Specify specify = field.getAnnotation(Specify.class);
+        if (specify != null) {
+            value = specify.value();
+            if (StringUtils.isNoneBlank(value)) {
+                injectGear = value;
+            }
+        }
+
+        return injectGear;
+    }
+
 }

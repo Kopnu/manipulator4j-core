@@ -38,9 +38,9 @@ public abstract non-sealed class AbstractGearMetadata implements GearMetadata {
 
     protected GearMetadata parent;
     protected List<Annotation> typeAnnotations;
-    protected List<Field> fieldsAnnotated;
-    protected List<Method> methodsAnnotated;
-    protected List<Constructor<?>> constructorsAnnotated;
+    protected List<Field> fieldsAutoinject;
+    protected List<Method> methodsAutoinject;
+    protected List<Constructor<?>> constructorsAutoinject;
 
     public AbstractGearMetadata(Class<?> gearClass) {
         this(gearClass.getCanonicalName(), gearClass.getSimpleName(), gearClass);
@@ -63,9 +63,9 @@ public abstract non-sealed class AbstractGearMetadata implements GearMetadata {
 
     private void analyzeGear() {
         typeAnnotations = ReflectionUtils.getTypeAnnotations(gearClass);
-        fieldsAnnotated = ReflectionUtils.findFieldsAnnotated(gearClass, Autoinject.class);
-        methodsAnnotated = ReflectionUtils.findMethodsAnnotated(gearClass, Autoinject.class);
-        constructorsAnnotated = ReflectionUtils.findConstructorsAnnotated(gearClass, Autoinject.class);
+        fieldsAutoinject = ReflectionUtils.findFieldsAnnotated(gearClass, Autoinject.class);
+        methodsAutoinject = ReflectionUtils.findMethodsAnnotated(gearClass, Autoinject.class);
+        constructorsAutoinject = ReflectionUtils.findConstructorsAnnotated(gearClass, Autoinject.class);
     }
 
     public String getGearName() {
