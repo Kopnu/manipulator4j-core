@@ -120,17 +120,19 @@ public class LoggerConfigurer {
                 .setPackages(getLevels(logging.get("level")));
             appenders.add(consoleAppender);
             JsonNode additionalAppendersNode = logging.get("additional");
-            for (Iterator<JsonNode> it = additionalAppendersNode.elements(); it.hasNext(); ) {
-                JsonNode jsonNode = it.next();
-                String type = jsonNode.get("type").asText().toUpperCase();
-                if (type.equalsIgnoreCase("console")) {
-                    throw new LoggerConfigurationException("Console appender is not configured in \"additional\" block");
+            if (additionalAppendersNode != null) {
+                for (Iterator<JsonNode> it = additionalAppendersNode.elements(); it.hasNext(); ) {
+                    JsonNode jsonNode = it.next();
+                    String type = jsonNode.get("type").asText().toUpperCase();
+                    if (type.equalsIgnoreCase("console")) {
+                        throw new LoggerConfigurationException("Console appender is not configured in \"additional\" block");
+                    }
+                    LoggingConfig.AppenderConfig additionalAppenderConfig = new LoggingConfig.AppenderConfig()
+                            .setName(getNodeValue(() -> jsonNode.get("name").asText(), "Appender" + appenders.size()))
+                            .setType(type)
+                            .setPackages(getLevels(jsonNode.get("level")));
+                    appenders.add(additionalAppenderConfig);
                 }
-                LoggingConfig.AppenderConfig additionalAppenderConfig = new LoggingConfig.AppenderConfig()
-                    .setName(getNodeValue(() -> jsonNode.get("name").asText(), "Appender" + appenders.size()))
-                    .setType(type)
-                    .setPackages(getLevels(jsonNode.get("level")));
-                appenders.add(additionalAppenderConfig);
             }
 
             return new LoggingConfig().setAppenderConfigs(appenders);
