@@ -69,14 +69,7 @@ public abstract non-sealed class AbstractGearMetadata implements GearMetadata {
     }
 
     public String getGearName() {
-        String name;
-        if (!StringUtils.isBlank(this.name)) {
-            name = this.name;
-        } else if (!StringUtils.isBlank(this.canonicalName)) {
-            name = this.canonicalName;
-        } else {
-            name = this.gearClass.getName();
-        }
+        String name = this.canonicalName + "@" + this.name;
         return name.toLowerCase();
     }
 

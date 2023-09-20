@@ -178,7 +178,7 @@ public class AutoinjectTest {
     }
 
     @Test(priority = 16)
-    public void testPostContruct() {
+    public void testPostConstruct() {
         Caldron caldron = Manipulator.run(AutoinjectTest.class);
         ForPostConstruct gear = caldron.getGearOfType(ForPostConstruct.class);
         Assert.assertNotNull(gear);

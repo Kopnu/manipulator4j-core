@@ -8,7 +8,6 @@ package love.korni.manipulator.core.caldron;
 import love.korni.manipulator.core.annotation.Gear;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,23 +22,18 @@ public class GearFactoryUtils {
 
     private static final Map<String, List<String>> RESOLVABLE_NAME = new ConcurrentHashMap<>(16);
 
-    public static List<String> resolveGearNames(Set<String> gearNames, String name) {
-        if (name == null) {
-            return Collections.emptyList();
-        }
+    public static List<String> resolveNames(Set<String> strings, String name) {
+        List<String> names = new ArrayList<>();
         if (RESOLVABLE_NAME.containsKey(name)) {
-            return RESOLVABLE_NAME.get(name);
-        }
-        List<String> resolve = new ArrayList<>();
-
-        for (String gearName : gearNames) {
-            if (gearName.toLowerCase().contains(name.toLowerCase())) {
-                resolve.add(gearName);
+            names = RESOLVABLE_NAME.get(name);
+        } else {
+            List<String> founded = strings.stream().filter(str -> str.startsWith(name) || str.endsWith(name)).toList();
+            if (!founded.isEmpty()) {
+                names.addAll(founded);
+                RESOLVABLE_NAME.put(name, names);
             }
         }
-
-        RESOLVABLE_NAME.put(name, resolve);
-        return resolve;
+        return names;
     }
 
     public static String resolveCircularRef(List<String> singletonsCurrentlyInCreation, String name) {
