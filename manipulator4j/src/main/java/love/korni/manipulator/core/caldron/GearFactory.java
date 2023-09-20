@@ -16,6 +16,7 @@ import love.korni.manipulator.core.caldron.metadata.factory.MethodGearMetadataFa
 import love.korni.manipulator.core.exception.GearConstructionException;
 import love.korni.manipulator.core.exception.NoSuchGearMetadataException;
 import love.korni.manipulator.core.gear.args.ArgsGear;
+import love.korni.manipulator.core.gear.args.DefaultArgsGear;
 import love.korni.manipulator.util.Assert;
 import love.korni.manipulator.util.ReflectionUtils;
 
@@ -168,7 +169,7 @@ public class GearFactory {
 
     private GearMetadata createMetadata(Class<?> clazz, String gearName) {
         GearMetadata parent = null;
-        if (clazz.getSuperclass() != null) {
+        if (clazz.getSuperclass() != null && !Object.class.equals(clazz.getSuperclass())) {
             parent = getMetadata(clazz.getSuperclass(), null);
             if (parent == null) {
                 parent = createMetadata(clazz.getSuperclass());
@@ -186,7 +187,13 @@ public class GearFactory {
         name = name != null ? name.toLowerCase() : clazz.getSimpleName().toLowerCase();
 
         // Поиск по Имени шестерни (название переменной или искомой шестерни)
-        GearMetadata gearMetadata = gearMetadataByNameMap.get(name);
+        GearMetadata gearMetadata = null;
+        List<String> resolveNames = GearFactoryUtils.resolveNames(gearMetadataByNameMap.keySet(), name);
+        for (String resolve : resolveNames) {
+            if (resolve.equalsIgnoreCase(clazz.getCanonicalName() + "@" + name)) {
+                gearMetadata = gearMetadataByNameMap.get(resolve);
+            }
+        }
 
         // Поиск гира по Классу (тип переменной или искомой шестерни)
         if (gearMetadata == null) {
@@ -196,8 +203,15 @@ public class GearFactory {
         // Поиск гира по Интерфейсу (если тип - интерфейс или абстрактный класс, то поиск реализации)
         if (gearMetadata == null && (clazz.isInterface() || Modifier.isAbstract(clazz.getModifiers()))) {
             List<GearMetadata> gearMetadataResolve = new ArrayList<>();
+            String finalName = name;
             gearMetadataByClassMap.keySet().stream()
                     .filter(clazz::isAssignableFrom)
+                    .filter(_clazz -> {
+                        if (resolveNames.size() > 1) {
+                            return resolveNames.contains("%s@%s".formatted(_clazz.getCanonicalName().toLowerCase(), finalName));
+                        }
+                        return true;
+                    })
                     .forEach(_class -> gearMetadataResolve.add(gearMetadataByClassMap.get(_class)));
 
             if (gearMetadataResolve.size() > 1) {
@@ -233,7 +247,7 @@ public class GearFactory {
 
     private GearMetadata filterByProfilesActive(GearMetadata gearMetadata) {
         if (gearMetadata != null) {
-            ArgsGear argsGear = (ArgsGear) singletonByNameGears.get("argsgear");
+            ArgsGear argsGear = (ArgsGear) singletonByNameGears.get(DefaultArgsGear.class.getCanonicalName().toLowerCase() + "@argsgear");
             List<String> activeProfiles = new ArrayList<>(List.of("default"));
             List<String> profiles = Optional.ofNullable(argsGear.getOptionValues("profiles")).orElse(Collections.emptyList());
             activeProfiles.addAll(profiles);
