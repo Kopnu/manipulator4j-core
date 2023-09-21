@@ -132,6 +132,8 @@ public class Manipulator {
         ApplicationCaldron applicationCaldron = new ApplicationCaldron(gearFactory);
         gearFactory.registerSingleton(applicationCaldron);
 
+        Runtime.getRuntime().addShutdownHook(new Thread(gearFactory::close));
+
         return applicationCaldron;
     }
 

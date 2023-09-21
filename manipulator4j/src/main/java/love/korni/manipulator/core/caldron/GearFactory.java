@@ -5,6 +5,7 @@
 
 package love.korni.manipulator.core.caldron;
 
+import love.korni.manipulator.core.annotation.PreDestroy;
 import love.korni.manipulator.core.caldron.metadata.ArrayGearMetadata;
 import love.korni.manipulator.core.caldron.metadata.ClassGearMetadata;
 import love.korni.manipulator.core.caldron.metadata.GearMetadata;
@@ -14,6 +15,7 @@ import love.korni.manipulator.core.caldron.metadata.factory.ClassGearMetadataFac
 import love.korni.manipulator.core.caldron.metadata.factory.GearMetadataFactory;
 import love.korni.manipulator.core.caldron.metadata.factory.MethodGearMetadataFactory;
 import love.korni.manipulator.core.exception.GearConstructionException;
+import love.korni.manipulator.core.exception.ManipulatorRuntimeException;
 import love.korni.manipulator.core.exception.NoSuchGearMetadataException;
 import love.korni.manipulator.core.gear.args.ArgsGear;
 import love.korni.manipulator.core.gear.args.DefaultArgsGear;
@@ -24,6 +26,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -115,6 +119,26 @@ public class GearFactory {
             throw new NoSuchGearMetadataException("Unknown gear with name [%s] and type [%s]".formatted(gearName, type));
         }
         return getGearOrConstruct(gearMetadata, null);
+    }
+
+    public void close() {
+        singletonByClassGears.forEach((type, gear) -> {
+            ReflectionUtils.findMethodsAnnotated(type, PreDestroy.class)
+                    .stream()
+                    .filter(method -> Modifier.isPublic(method.getModifiers()))
+                    .filter(method -> method.getParameterTypes().length == 0)
+                    .forEach(method -> {
+                try {
+                    method.invoke(gear);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    throw new ManipulatorRuntimeException("Error while pre-destroy gear with type [%s]".formatted(type), e);
+                }
+            });
+        });
+        singletonByClassGears.clear();
+        singletonByNameGears.clear();
+        gearMetadataByNameMap.clear();
+        gearMetadataByClassMap.clear();
     }
 
     protected <T> T getGear(String gearName, Type type) throws ClassNotFoundException {
