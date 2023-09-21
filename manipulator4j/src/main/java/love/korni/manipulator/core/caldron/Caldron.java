@@ -57,4 +57,10 @@ public interface Caldron {
     <T> T getGearByName(String gearName, Class<T> type);
 
     GearFactory getGearFactory();
+
+    /**
+     * Запустить процесс очистки котла. Будет выполнен вызов публичных методов помеченных аннотацией {@link love.korni.manipulator.core.annotation.PreDestroy}.
+     * После чего все шестерни будут удалены, и котёл придёт в негодность.
+     */
+    void close();
 }

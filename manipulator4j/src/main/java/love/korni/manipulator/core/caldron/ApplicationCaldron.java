@@ -7,6 +7,8 @@ package love.korni.manipulator.core.caldron;
 
 import love.korni.manipulator.core.exception.ManipulatorRuntimeException;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.lang.reflect.Type;
 
 /**
@@ -14,6 +16,7 @@ import java.lang.reflect.Type;
  *
  * @author Sergei_Konilov
  */
+@Slf4j
 public class ApplicationCaldron implements Caldron {
 
     private final GearFactory gearFactory;
@@ -45,5 +48,12 @@ public class ApplicationCaldron implements Caldron {
             throw new ManipulatorRuntimeException("GearFactory is null");
         }
         return gearFactory;
+    }
+
+    @Override
+    public void close() {
+        log.info("Starting the cleaning process...");
+        gearFactory.close();
+        log.info("Cleaning complete!");
     }
 }
