@@ -21,7 +21,6 @@ import love.korni.manipulator.core.gear.file.FileManager;
 import love.korni.manipulator.core.gear.file.ResourceFileManager;
 import love.korni.manipulator.core.gear.file.reader.ClasspathReader;
 import love.korni.manipulator.core.runner.Runner;
-import love.korni.manipulator.logging.LoggerConfigurer;
 import love.korni.manipulator.property.ConfigManager;
 import love.korni.manipulator.property.DefaultConfigManager;
 import love.korni.manipulator.util.ConstructionUtils;
@@ -122,9 +121,6 @@ public class Manipulator {
 
         ConfigManager configManager = new DefaultConfigManager(fileManager, argsGear.getOptionValues("profiles"));
         gearFactory.registerSingleton("configmanager", configManager);
-
-        LoggerConfigurer loggerConfigurer = new LoggerConfigurer();
-        loggerConfigurer.configure(configManager.getConfig("logging"));
 
         String banner = fileManager.readFileAsString(ClasspathReader.CLASSPATH + "banner.txt");
         log.info(banner);

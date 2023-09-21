@@ -3,10 +3,10 @@
  * Copyright (c) 2022 GrandProject Team.
  */
 
-package love.korni.manipulator.localization;
+package love.korni.manipulator.message;
 
-import love.korni.manipulator.localization.exception.NoSuchMessageException;
-import love.korni.manipulator.localization.util.PropertyMultiResourceBundle;
+import love.korni.manipulator.message.exception.NoSuchMessageException;
+import love.korni.manipulator.message.util.PropertyMultiResourceBundle;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;

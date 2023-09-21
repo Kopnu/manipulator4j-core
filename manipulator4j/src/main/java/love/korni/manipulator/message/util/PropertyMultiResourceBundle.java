@@ -3,7 +3,7 @@
  * Copyright (c) 2022 GrandProject Team.
  */
 
-package love.korni.manipulator.localization.util;
+package love.korni.manipulator.message.util;
 
 import love.korni.manipulator.util.Assert;
 

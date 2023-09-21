@@ -1,4 +1,4 @@
-package love.korni.manipulator.localization;
+package love.korni.manipulator.message;
 
 import lombok.Data;
 

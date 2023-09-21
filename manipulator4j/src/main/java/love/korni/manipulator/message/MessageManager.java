@@ -3,9 +3,9 @@
  * Copyright (c) 2022 GrandProject Team.
  */
 
-package love.korni.manipulator.localization;
+package love.korni.manipulator.message;
 
-import love.korni.manipulator.localization.exception.NoSuchMessageException;
+import love.korni.manipulator.message.exception.NoSuchMessageException;
 
 
 import java.util.Locale;

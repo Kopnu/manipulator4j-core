@@ -3,7 +3,7 @@
  * Copyright (c) 2022 GrandProject Team.
  */
 
-package love.korni.manipulator.localization.exception;
+package love.korni.manipulator.message.exception;
 
 import java.util.Locale;
 
